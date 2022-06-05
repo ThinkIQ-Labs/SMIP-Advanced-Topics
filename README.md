@@ -18,7 +18,7 @@ Time series data. Charting. Time Zones & Geo Location. SMIP components.
 
 ### Week 4: Introduction to the Material Ledger
 
-Accounts. Transactions. Laws of material movement and attribute propagation. Detection of material movement.
+Material Types. Accounts. Transactions. Laws of material movement and attribute propagation. Detection of material movement.
 
 ## Part II: Headless Scripts
 
