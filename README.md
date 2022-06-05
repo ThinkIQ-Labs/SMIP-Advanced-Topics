@@ -2,11 +2,11 @@
 
 Over the years the list of topics to cover when it comes to developing on the SMIP has grown to practically fill a full semester course. This is sequence of topics that will guide the reader from taking first steps to mastering complex analyticical and vizualisation challenges.
 
-## Chapter 1: Browser Scripts with GraphQL and Vue.js
+## Part I: Browser Scripts with GraphQL and Vue.js
 
 ### Week 1: Introduction to the SMIP's GraphQL API, it's mini-IDE, and the Vue.js SPA Framework
 
-Click around. Explore the API using GraphiQL. Build a Hello World page. Build a Unit Conversion Page. Tiny but useful PHP helpers: context, script loaders.
+Click around. Explore the API using GraphiQL. Build a Hello World page. Build a Unit Conversion Page. Tiny but useful PHP helpers: context, script loaders, URL parameters.
 
 ### Week 2: Model Automation and Attribute Manipulation
 
@@ -20,7 +20,7 @@ Time series data. Charting. Time Zones & Geo Location. SMIP components.
 
 Accounts. Transactions. Laws of material movement and attribute propagation. Detection of material movement.
 
-## Chapter 2: Headless Scripts
+## Part II: Headless Scripts
 
 ### Week 5: Using PHP and Python to Access Model Data via SQL and GraphQL
 
@@ -32,9 +32,9 @@ Reuse of code. Calling other scripts. API-like data access for browser scripts.
 
 ### Week 7: Smart Attributes, Event Detection, and Value Stream Aggregates
 
-Using the objectValue field to configure smart attribute. Resolving FQN's and FQN-references. Moving window averaging. 
+Using the objectValue field to configure smart attribute. Resolving FQN's and FQN-references. Moving window averaging. TS algos: removal of duplications, pulse counting, counter attributes, bucketing.
 
-## Chapter 3: Smart Manufacturing Apps
+## Part III: Smart Manufacturing Apps
 
 ### Week 8: Distribution of SMIP Goodies using Libraries and Joomla Components
 
