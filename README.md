@@ -24,7 +24,7 @@ Material Types. Accounts. Transactions. Laws of material movement and attribute 
 
 ### Week 5: Using PHP and Python to Access Model Data via SQL and GraphQL
 
-Result object. Continuous computing. Batch vs. stream.
+Result object. Continuous computing. Batch vs. stream. Uptime, yield, mtbf, ...
 
 ### Week 6: Object-Oriented Project Organization
 
