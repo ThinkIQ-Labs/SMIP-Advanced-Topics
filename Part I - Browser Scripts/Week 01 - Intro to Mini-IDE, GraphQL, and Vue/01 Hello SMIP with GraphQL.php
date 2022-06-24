@@ -5,6 +5,7 @@
 <div id="myList"></div>
 
 <script>
+    document.title = "Quantities Report";
     const getQuantities = async () =>{
 
         let query = `
