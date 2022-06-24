@@ -8,6 +8,10 @@ require_once 'thinkiq_context.php';
 $context = new Context();
 ?>
 
+<script>
+    document.title="SMIP UoM's";
+</script>
+
 <div id="app">
 
     <div class="row">            
@@ -29,12 +33,11 @@ $context = new Context();
 </div>
 
 <script>
-    window.document.title = "GraphQL Demo"
     var app = new Vue({
         el: "#app",
         data() {
             return {
-                pageTitle: "Units of Measure in the ThinkIQ Platform",
+                pageTitle: "Units of Measure in the SMIP",
                 context:<?php echo json_encode($context)?>,
                 quantities: [],
             }
