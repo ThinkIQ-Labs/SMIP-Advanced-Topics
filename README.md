@@ -1,10 +1,10 @@
-# DevCon-SMIP: 12 chapters on how to hack the SMIP
+# Developing Applications on the CESMII SMIP - Advanced Topics
 
-Over the years the list of topics to cover when it comes to developing on the SMIP has grown to fill a full semester course. This is a sequence of topics that is carefully compiled to guide the reader from taking first steps to mastering complex analyticical and vizualisation challenges. 
+Over the years the list of topics to cover when it comes to developing on the SMIP has grown to that it could fill a full semester course. This post is a sequence of topics that is carefully compiled to guide the reader from taking first steps to mastering complex analyticical and vizualisation challenges. 
 
 Among the many challenges in digital transformation are islands of knowledge and subject matter expertise. Folks with deep manufacturing knowledge might find certain key concepts of data capture and processing too technical. Specialists equiped with machine learning experience are likely to be opinionated about anything that doesn't come in very particular flavors such as Python or R. 
 
-Working with the SMIP for many years we understand that to fully leverage the raw power of the platform it takes a bit of all these: manufacturing curiosity, analytical skills, web development chops, basic understanding of PLC's, industry protocols and networking. It is expected to learn new tricks and master new techniques on a daily basis. Tools and skills to put this all together likely include most the following to a certain extend: PHP, Python, SQL, js, .NET, GraphQL, Vue.js, jwt, ... 
+Working with the SMIP for many years, we understand that to fully leverage the raw power of the platform it takes a bit of all these: manufacturing curiosity, analytical skills, web development chops, basic understanding of PLC's, industry protocols and networking. It is expected to learn new tricks and master new techniques on a daily basis. Tools and skills to put this all together likely include most the following to a certain extend: PHP, Python, SQL, js, .NET, GraphQL, Vue.js, jwt, and others.  
 
 ## Part I: Browser Scripts with GraphQL and Vue.js
 
