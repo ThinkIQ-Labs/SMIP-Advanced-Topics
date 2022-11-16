@@ -9,6 +9,10 @@ HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.charts.min.js', array('ve
 
 require_once 'thinkiq_context.php';
 $context = new Context();
+
+use Joomla\CMS\Factory;
+$user = Factory::getUser();
+
 ?>
 
 <script>
@@ -42,6 +46,7 @@ $context = new Context();
             return {
                 pageTitle: "Units of Measure in the SMIP",
                 context:<?php echo json_encode($context)?>,
+                user:<?php echo json_encode($user)?>,
                 quantities: [],
             }
         },
