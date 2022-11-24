@@ -15,10 +15,6 @@ $user = Factory::getUser();
 
 ?>
 
-<script>
-    document.title="SMIP UoM's";
-</script>
-
 <div id="app">
 
     <div class="row">            
@@ -40,6 +36,8 @@ $user = Factory::getUser();
 </div>
 
 <script>
+    var WinDoc = window.document;
+    
     var app = new Vue({
         el: "#app",
         data() {
@@ -51,6 +49,7 @@ $user = Factory::getUser();
             }
         },
         mounted: async function () {
+            WinDoc.title = this.pageTitle;
             await this.getQuantitiesAsync();
         },
         methods: {
