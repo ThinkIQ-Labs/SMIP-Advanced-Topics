@@ -25,7 +25,7 @@ $user = Factory::getUser();
         <div class="col-12">
             <h1 class="pb-2 pt-2 text-center">{{pageTitle}}</h1>
             <p class="pb-4 text-center">
-                <a v-bind:href="`index.php?option=com_modeleditor&view=script&id=${context.std_inputs.script_id}`" target="_blank">source</a>
+                <a v-bind:href="`/index.php?option=com_modeleditor&view=script&id=${context.std_inputs.script_id}`" target="_blank">source</a>
             </p>
         </div>   
     </div>
