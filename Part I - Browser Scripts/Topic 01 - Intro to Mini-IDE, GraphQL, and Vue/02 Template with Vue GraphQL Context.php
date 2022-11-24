@@ -19,12 +19,14 @@ $user = Factory::getUser();
 
     <div class="row">            
         <div class="col-12">
-            <h1 class="pb-2 pt-2 text-center">{{pageTitle}}</h1>
-            <p class="pb-4 text-center">
-                <a v-bind:href="`/index.php?option=com_modeleditor&view=script&id=${context.std_inputs.script_id}`" target="_blank">source</a>
-            </p>
+            <h1 class="pb-2 pt-2" style="font-size:2.5rem; color:#126181;">
+                {{pageTitle}}
+                <a v-if="true" class="float-end btn btn-sm btn-link mt-2" style="font-size:1rem; color:#126181;" v-bind:href="`/index.php?option=com_modeleditor&view=script&id=${context.std_inputs.script_id}`" target="_blank">source</a>
+            </h1>
+            <hr style="border-color:#126181; border-width:medium;" />
         </div>   
     </div>
+
 
     <div v-for="aQuantity in quantities">
         <h4>{{aQuantity.displayName}}</h4>
