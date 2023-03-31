@@ -14,8 +14,8 @@ use Joomla\CMS\Factory;
 $user = Factory::getUser();
 
 use TiqUtilities\Model\Script;
-$ua_nodeset_api = new Script('opc_ua_nodesets_io.opc_ua_nodesets_api');
-$ua_nodeset_api->script="";
+$fancy_api = new Script('some_library.fancy_api');
+$fancy_api->script="";
 ?>
 
 <div id="app">
@@ -45,7 +45,7 @@ $ua_nodeset_api->script="";
                 pageTitle: "Consume API Script",
                 context:<?php echo json_encode($context)?>,
                 user:<?php echo json_encode($user)?>,
-                uaNodesetApi:<?php echo json_encode($ua_nodeset_api)?>,
+                fancyAPI:<?php echo json_encode($fancy_api)?>,
                 input: 'input text',
                 output: ''
             }
@@ -62,7 +62,7 @@ $ua_nodeset_api->script="";
                 let apiRoute = `/index.php?option=com_thinkiq&task=invokeScript`;
                 let settings = { method: 'POST', headers: {} };
                 let formData = new FormData();
-                formData.append('script_name', this.uaNodesetApi.script_file_name);
+                formData.append('script_name', this.fancyAPI.script_file_name);
                 formData.append('output_type', 'browser');
                 formData.append('function', 'helloWorld');
                 formData.append('argument', JSON.stringify(argument));
