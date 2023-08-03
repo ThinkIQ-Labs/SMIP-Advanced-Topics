@@ -8,8 +8,9 @@ We have 2 small samples in this section.
 
 1. Take 2 (3 files): The first example still leaves a lot of clutter in the browser script. This can be cleaned up further by lifting out the fetch request sections and packaging them as a dedicated javascript sdk. So the whole api ships in 3 parts: the php api, a js sdk, and a docs webpage, below. The resulting browser script to test the api can be conviniently structured as a documentation page, below.
 
-![Screenshot](./img/apiDemo.png)
-<center>Example of Documentation Page with Return Data</center>
 
-![Screenshot](./img/apiDemoLibrary.png)
-<center>Project/Library Structure</center>
+![Screenshot](./img/apiDemo.png#center)
+<em> Image: Example of Documentation Page with Return Data</em>
+
+![Screenshot](./img/apiDemoLibrary.png#center)
+<em>Image: Project/Library Structure</em>
