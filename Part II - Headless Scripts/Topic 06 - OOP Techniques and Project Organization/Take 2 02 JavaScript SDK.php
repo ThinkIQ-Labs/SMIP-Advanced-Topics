@@ -48,6 +48,12 @@ $php_api_file_name = $php_api->script_file_name;
             return await GetJsonResponseAsync('GetLibraryByName', argument);
         },
        
+        GetAvatarAsync: async function(aSerialNumber){
+            let argument={
+                serialNumber: aSerialNumber
+            };
+            return await GetJsonResponseAsync('GetAvatar',argument);
+        },
     }
 
 </script>

@@ -5,6 +5,8 @@
 require_once 'thinkiq_context.php';
 $context = new Context();
 
+TiqUtilities\Model\Script::includeScript('api_demo.guzzle_client');
+
 use Joomla\CMS\Response\JsonResponse; // Used for returning data to the client.
 
 if (!defined('JPATH_BASE')) define('JPATH_BASE', dirname(__DIR__));
@@ -29,7 +31,15 @@ function GetLibraryByName($aLibraryName){
     return $aLibrary;
 }
 
+function GetAvatar($serialNumber){
+    $client = new Guzzler();
+    $response = $client->GetAsync("avatars/$serialNumber");
+    return $response;
+}
+
+
 switch ($f){
+    
     case "Echo":
 
         $returnObject = $a->hello == null ? "Hello Echo." : $a->hello;
@@ -50,4 +60,12 @@ switch ($f){
         die(new JsonResponse($returnObject));
         break;
         
+    case "GetAvatar":
+
+        $aSerialNumber = $a->serialNumber;
+
+        $returnObject = GetAvatar($aSerialNumber);
+        die(new JsonResponse($returnObject));
+        break;
+
 }

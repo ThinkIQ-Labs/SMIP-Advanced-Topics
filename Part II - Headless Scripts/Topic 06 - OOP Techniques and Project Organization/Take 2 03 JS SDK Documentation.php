@@ -85,6 +85,10 @@
 
     <hr />
 
+    <h1>
+        GetAvatar ... this one you can do yourself.
+    </h1>
+
 </div>
 
 <script>
@@ -109,6 +113,9 @@
                 getLibraryByName: {},
                 showGetLibraryByName: false
 
+                getAvatarInput: 'Joda',
+                getAvatar: {},
+                showgetAvatar: false
             }
         },
         mounted: function(){
@@ -132,8 +139,11 @@
 
             GetLibraryByNameAsync: async function(){
                 this.getLibraryByName = await ApiDemoSdk.GetLibraryByNameAsync(this.getLibraryByNameInput);
-            }
+            },
             
+            GetAvatarAsync: async function(){
+                this.getAvatar = await ApiDemoSdk.GetAvatarAsync(this.getAvatarInput);
+            }
         }
     });
 
