@@ -1,14 +1,11 @@
-<?php
+ <?php
 
 use Joomla\CMS\HTML\HTMLHelper;
 
-$primary_domain = 'https://' . $_SERVER['HTTP_HOST'];
-
-HTMLHelper::_('script', "$primary_domain/media/com_thinkiq/js/dist/tiq.core.js", array('version' => 'auto', 'relative' => false, 'detectDebug' => false));
-// HTMLHelper::_('script', "$primary_domain/media/com_thinkiq/js/dist/tiq.tiqGraphQL.js", array('version' => 'auto', 'relative' => false, 'detectDebug' => false));
-// HTMLHelper::_('script', "$primary_domain/media/com_thinkiq/js/dist/tiq.components.js", array('version' => 'auto', 'relative' => false, 'detectDebug' => false));
-// HTMLHelper::_('script', "$primary_domain/media/com_thinkiq/js/dist/tiq.charts.js", array('version' => 'auto', 'relative' => false, 'detectDebug' => false));
-
+HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.core.js',            array('version' => 'auto', 'relative' => false));
+HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.tiqGraphQL.js',      array('version' => 'auto', 'relative' => false));
+// HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.components.min.js',  array('version' => 'auto', 'relative' => false));
+// HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.charts.min.js',      array('version' => 'auto', 'relative' => false));
 
 require_once 'thinkiq_context.php';
 $context = new Context();
@@ -43,8 +40,8 @@ $user = Factory::getUser();
 <script>
     var WinDoc = window.document;
     
-    var app = new Vue({
-        el: "#app",
+    var app = createApp({
+        // el: "#app",
         data() {
             return {
                 pageTitle: "Units of Measure in the SMIP",
@@ -75,5 +72,6 @@ $user = Factory::getUser();
                 this.quantities = aResponse.data.quantities;
             }
         },
-    });
+    })
+    .mount('#app');
 </script>
