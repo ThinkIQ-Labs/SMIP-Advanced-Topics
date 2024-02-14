@@ -3,7 +3,7 @@
 use Joomla\CMS\HTML\HTMLHelper;
 
 HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.core.js',            array('version' => 'auto', 'relative' => false));
-HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.tiqGraphQL.js',      array('version' => 'auto', 'relative' => false));
+// HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.tiqGraphQL.js',      array('version' => 'auto', 'relative' => false));
 // HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.components.min.js',  array('version' => 'auto', 'relative' => false));
 // HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.charts.min.js',      array('version' => 'auto', 'relative' => false));
 
@@ -68,7 +68,7 @@ $user = Factory::getUser();
                     }
                 `;
 
-                let aResponse = await tiqGraphQL.makeRequestAsync(query);
+                let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
                 this.quantities = aResponse.data.quantities;
             }
         },
