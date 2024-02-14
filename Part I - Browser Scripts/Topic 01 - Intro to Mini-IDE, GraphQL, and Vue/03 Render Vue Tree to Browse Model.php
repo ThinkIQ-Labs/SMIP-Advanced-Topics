@@ -3,7 +3,7 @@
 use Joomla\CMS\HTML\HTMLHelper;
 
 HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.core.js', array('version' => 'auto', 'relative' => false));
-HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.tiqGraphQL.js', array('version' => 'auto', 'relative' => false));
+//HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.tiqGraphQL.js', array('version' => 'auto', 'relative' => false));
 
 ?>
 
@@ -163,7 +163,7 @@ var app = createApp({
                     }
                 }
             `;
-            let queryResponse = await tiqGraphQL.makeRequestAsync(query);
+            let queryResponse = await tiqJSHelper.invokeGraphQLAsync(query);
 
 
             let things = queryResponse.data.things.sort((a, b) => (a.fqnList.join('/') > b.fqnList.join('/')) ? 1 : -1);
