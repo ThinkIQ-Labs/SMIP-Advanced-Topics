@@ -373,10 +373,8 @@ $user = Factory::getUser();
             return { 
                 tz: JSON.stringify(appTimeZones),
                 tp: JSON.stringify(appTimePeriods),
-                // startDate: core.moment().tz(appTimeZones[0].value).add(-6,'h'),
-                // endDate: core.moment().tz(appTimeZones[0].value),
-                startDate: core.moment('2023-11-08').tz(appTimeZones[0].value),
-                endDate: core.moment('2024-01-04').tz(appTimeZones[0].value),
+                startDate: core.moment().tz(appTimeZones[0].value).add(-6,'h'),
+                endDate: core.moment().tz(appTimeZones[0].value),
                 activeTimePeriod: 0,
                 
                 pageTitle: "Material Ledger and Accounts Explorer",
