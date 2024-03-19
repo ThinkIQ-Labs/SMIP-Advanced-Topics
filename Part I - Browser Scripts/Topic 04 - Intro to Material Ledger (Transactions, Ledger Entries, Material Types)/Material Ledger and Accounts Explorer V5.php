@@ -549,7 +549,8 @@ $user = Factory::getUser();
             },
             onSelectActivity: function(aActivity, aTransactionId){
                 if(aActivity!=null){
-                    this.toggleIsActive(this.movements.find(x=>x.transactionId==aTransactionId));
+                    let aTransaction = this.movements.find(x=>x.transactionId==aTransactionId);
+                    aTransaction.isActive = true;                    
                     this.onSelectAccount(aActivity.account);
                 }
             },
