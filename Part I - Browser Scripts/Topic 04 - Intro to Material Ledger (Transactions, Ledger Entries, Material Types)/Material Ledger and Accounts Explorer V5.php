@@ -43,7 +43,7 @@ $user = Factory::getUser();
                 <h4>3. Individual Material Movements</h4>
                 <p>
                     The term we use for each row in this tool is a transaction. Transactions contain multiple individual movements. Our system leans on the concepts of a double entry 
-                    accounting system, so for each transaction, there are typically 2 individual movements: an outgoing and an incoming movement, or a debit (green up-arrow) and a credit (red down-arrow). 
+                    accounting system, so for each transaction, there are typically 2 individual movements: an outgoing and an incoming movement, or a debit (red down-arrow) and a credit (green up-arrow). 
                     If there are more than 2 movements in a single transaction, we show them in multiple rows as needed. For instance, a tank can be filled from 2 different 
                     sources, which results in 2 debits and 1 credit. We always show before and after balance, as well as the amount. 
                 </p>
