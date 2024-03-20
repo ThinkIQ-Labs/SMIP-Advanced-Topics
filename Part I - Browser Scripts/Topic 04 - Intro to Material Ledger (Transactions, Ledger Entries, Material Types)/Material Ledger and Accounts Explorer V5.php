@@ -35,7 +35,7 @@ $user = Factory::getUser();
                 <h4>2. Ledger Entries Table</h4>
                 <p>
                     Once you select an account we tabulate all material movements that enter or leave this account within the selected timespan. The table has a timestamp 
-                    column and next to it three main sections: Source, Active Account, and Target. This way we can show incomming movements in the left 2 column blocks, i.e. 
+                    column and next to it three main sections: Source, Active Account, and Target. This way we can show incoming movements in the left 2 column blocks, i.e. 
                     source and active account, and leaving movements in the right 2 column blocks, i.e. active acount and target.<br />
                     
                 </p>
@@ -304,6 +304,10 @@ $user = Factory::getUser();
                                 <td colspan=4 :style="aIndex < aMovement.maxActivityCount ? 'border-bottom: 0px solid #dee2e6;' : ''" style="border-left: 1px solid #dee2e6;">
                                     <div v-if="aMovement.sourceActivities.length >= aIndex">
                                     <div v-if="aMovement.sourceActivities[aIndex-1].showDetail" class="form-group px-4">
+                                        <label class="">Movement Start</label>
+                                        <input type="text" class="form-control" v-model="aMovement.sourceActivities[aIndex-1].startTimestamp" />
+                                        <label class="">Movement End</label>
+                                        <input type="text" class="form-control" v-model="aMovement.sourceActivities[aIndex-1].endTimestamp" />
                                         <label class="">Account</label>
                                         <input type="text" class="form-control" v-model="aMovement.sourceActivities[aIndex-1].account.displayName" />
                                         <label v-if="aMovement.sourceActivities[aIndex-1].material!=null" class="">Material Type</label>
@@ -321,6 +325,10 @@ $user = Factory::getUser();
                                 <td colspan=3 :style="aIndex < aMovement.maxActivityCount ? 'border-bottom: 0px solid #dee2e6;' : ''" style="border-left: 1px solid #dee2e6;">
                                     <div v-if="aMovement.coreActivities.length >= aIndex">
                                     <div v-if="aMovement.coreActivities[aIndex-1].showDetail" class="form-group px-4">
+                                        <label class="">Movement Start</label>
+                                        <input type="text" class="form-control" v-model="aMovement.coreActivities[aIndex-1].startTimestamp" />
+                                        <label class="">Movement End</label>
+                                        <input type="text" class="form-control" v-model="aMovement.coreActivities[aIndex-1].endTimestamp" />
                                         <label class="">Account</label>
                                         <input type="text" class="form-control" v-model="aMovement.coreActivities[aIndex-1].account.displayName" />
                                         <label v-if="aMovement.coreActivities[aIndex-1].material!=null" class="">Material Type</label>
@@ -338,6 +346,10 @@ $user = Factory::getUser();
                                 <td colspan=4 :style="aIndex < aMovement.maxActivityCount ? 'border-bottom: 0px solid #dee2e6;' : ''" style="border-left: 1px solid #dee2e6;">
                                     <div v-if="aMovement.targetActivities.length >= aIndex">
                                     <div v-if="aMovement.targetActivities[aIndex-1].showDetail" class="form-group px-4">
+                                        <label class="">Movement Start</label>
+                                        <input type="text" class="form-control" v-model="aMovement.targetActivities[aIndex-1].startTimestamp" />
+                                        <label class="">Movement End</label>
+                                        <input type="text" class="form-control" v-model="aMovement.targetActivities[aIndex-1].endTimestamp" />
                                         <label class="">Account</label>
                                         <input type="text" class="form-control" v-model="aMovement.targetActivities[aIndex-1].account.displayName" />
                                         <label v-if="aMovement.targetActivities[aIndex-1].material!=null" class="">Material Type</label>
