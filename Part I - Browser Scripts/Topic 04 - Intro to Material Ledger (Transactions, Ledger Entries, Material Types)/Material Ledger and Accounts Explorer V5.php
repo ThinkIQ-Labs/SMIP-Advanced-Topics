@@ -162,14 +162,19 @@ $user = Factory::getUser();
                         <th style="border-left: 1px solid #dee2e6;" scope="col" colspan="1">
                             <i class="fa fa-ellipsis-v" style="cursor: pointer;" id="dropdownMenu2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
                             <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
-                                <button class="dropdown-item" type="button" @click="DeleteAllTransactionsAsync()">
+                                <button class="dropdown-item" type="button" @click="DeleteAllTransactionsAsync">
                                     <i class="fa fa-trash mr-1" aria-hidden="true" ></i>
                                     Delete All Visible Transactions ( x{{movements.length}} )
                                 </button>
-                                <button hidden class="dropdown-item" type="button">Edit Transactions</button>
+                                <button class="dropdown-item" type="button" @click="SaveReportToCsv">
+                                    <i class="fa fa-download mr-1" aria-hidden="true" ></i>
+                                    Download .csv
+                                </button>
+                                
+                                
                             </div>
                         </th>
-                </tr>
+                    </tr>
                     <tr>
                         <th scope="col">ts</th>
 
@@ -510,6 +515,61 @@ $user = Factory::getUser();
             await this.getAccountsAsync();
         },
         methods: {
+            SaveReportToCsv: function(){
+                // https://stackoverflow.com/questions/73370162/converting-json-to-csv-in-javascript
+
+                //Desired headers in the .csv. Other fields are ignored
+                let titles = [
+                    '"ts"',
+                    '"SourceAccount"',
+                    '"SourceStartBalance"',
+                    '"SourceEndBalance"',
+                    '"SourceAmount"',
+                    '"CoreStartBalance"',
+                    '"CoreEndBalance"',
+                    '"CoreAmount"',
+                    '"TargetAccount"',
+                    '"TargetStartBalance"',
+                    '"TargetEndBalance"',
+                    '"TargetAmount"'
+                ];
+
+                //Choose your seperator
+                const seperator = ",";
+
+                let reportData = [];
+
+                this.movements.forEach(aMovement => {
+                    for(let aIndex=0; aIndex < aMovement.maxActivityCount; aIndex++){
+                        let aData = [];
+                        aData.push(`"${aMovement.tsPretty}"`);
+                        
+                        aData.push(aIndex < aMovement.sourceActivities.length ? `"${this.accounts.find(x=>x.id==aMovement.sourceActivities[aIndex].accountId).displayName}"` : `""`);
+                        aData.push(aIndex < aMovement.sourceActivities.length ? `"${aMovement.sourceActivities[aIndex].startBalance}"` : `""`);
+                        aData.push(aIndex < aMovement.sourceActivities.length ? `"${aMovement.sourceActivities[aIndex].endBalance}"` : `""`);
+                        aData.push(aIndex < aMovement.sourceActivities.length ? `"${aMovement.sourceActivities[aIndex].amount}"` : `""`);
+                        
+                        aData.push(aIndex < aMovement.coreActivities.length ? `"${aMovement.coreActivities[aIndex].startBalance}"` : `""`);
+                        aData.push(aIndex < aMovement.coreActivities.length ? `"${aMovement.coreActivities[aIndex].endBalance}"` : `""`);
+                        aData.push(aIndex < aMovement.coreActivities.length ? `"${aMovement.coreActivities[aIndex].amount}"` : "");
+
+                        aData.push(aIndex < aMovement.targetActivities.length ? `"${this.accounts.find(x=>x.id==aMovement.targetActivities[aIndex].accountId).displayName}"` : `""`);
+                        aData.push(aIndex < aMovement.targetActivities.length ? `"${aMovement.targetActivities[aIndex].startBalance}"` : `""`);
+                        aData.push(aIndex < aMovement.targetActivities.length ? `"${aMovement.targetActivities[aIndex].endBalance}"` : `""`);
+                        aData.push(aIndex < aMovement.targetActivities.length ? `"${aMovement.targetActivities[aIndex].amount}"` : `""`);
+                        
+                        reportData.push(aData);
+                    }
+                });
+
+                //Prepare csv with a header row and our data
+                const csv = [titles.join(seperator), ...reportData.map(x=>x.join(seperator))];
+
+                //Export our csv in rows to a csv file
+                let csvContent = "data:text/csv;charset=utf-8," + csv.join("\n");
+                var encodedUri = encodeURI(csvContent);
+                window.open(encodedUri);
+            },
             toggleIsActive: function(aMovement){
                 if(this.activeMovement){
                     if(this.activeMovement.transactionId == aMovement.transactionId){
