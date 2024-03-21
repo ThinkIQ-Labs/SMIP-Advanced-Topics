@@ -622,6 +622,11 @@ $user = Factory::getUser();
             onSelectActivity: function(aActivity, aTransactionId){
                 if(aActivity!=null){
                     let aTransaction = this.movements.find(x=>x.transactionId==aTransactionId);
+                    if(this.activeMovement){
+                        if(this.activeMovement.transactionId != aTransaction.transactionId){
+                            this.activeMovement.isActive = false;
+                        }
+                    }
                     aTransaction.isActive = true;                    
                     this.onSelectAccount(aActivity.account);
                 }
