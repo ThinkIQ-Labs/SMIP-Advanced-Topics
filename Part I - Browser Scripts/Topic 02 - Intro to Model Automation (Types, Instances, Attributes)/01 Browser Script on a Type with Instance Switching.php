@@ -33,7 +33,7 @@ foreach($aHost->type->instances as $aInstance){
                 <a v-if="true" class="float-end btn btn-sm btn-link mt-2" style="font-size:1rem; color:#126181;" v-bind:href="`/index.php?option=com_modeleditor&view=script&id=${context.std_inputs.script_id}`" target="_blank">source</a>
             </h1>
             <div>
-                <button class="btn btn-sm me-3" v-bind:class="!aInstance.isActive ? 'btn-light' : 'btn-secondary'" v-for="aInstance in host.type.instances" @click="activateInstance(aInstance)">{{aInstance.display_name}}</button>
+                <button class="btn btn-sm me-3" v-bind:class="!aInstance.isActive ? 'btn-light' : 'btn-secondary'" v-for="aInstance in AllInstances" @click="activateInstance(aInstance)">{{aInstance.display_name}}</button>
             </div>
             <hr style="border-color:#126181; border-width:medium;" />
         </div>   
@@ -67,7 +67,7 @@ foreach($aHost->type->instances as $aInstance){
                 return Object.values(this.host.type.instances).find(x=>x.isActive);
             },
             AllInstances: function(){
-                return Object.values(this.host.type.instances);
+                return Object.values(this.host.type.instances).sort((a,b) => a.display_name > b.display_name ? 1 : -1);
             }
 
         },
