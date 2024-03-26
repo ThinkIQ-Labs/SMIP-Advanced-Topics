@@ -39,6 +39,17 @@ foreach($aHost->type->instances as $aInstance){
         </div>   
     </div>
 
+    <div class="row">
+        <div class="col-12" v-if="ActiveInstance">
+            <div class="card w-25">
+                <div class="card-body">
+                    <h5 class="card-title">{{ActiveInstance.display_name}}</h5>
+                    <p class="card-text" v-for="aAttribute in ActiveInstance.attributes">{{aAttribute.display_name}}: {{aAttribute.current_value}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -57,8 +68,7 @@ foreach($aHost->type->instances as $aInstance){
         mounted: async function () {
 
             WinDoc.title = this.pageTitle;
-            
-            this.activateInstance(Object.values(this.host.type.instances).find(x=>x.id==this.host.id), true);
+            await this.activateInstance(this.host, true)
 
         },
         computed: {
@@ -66,18 +76,20 @@ foreach($aHost->type->instances as $aInstance){
             ActiveInstance: function(){
                 return Object.values(this.host.type.instances).find(x=>x.isActive);
             },
+
             AllInstances: function(){
                 return Object.values(this.host.type.instances).sort((a,b) => a.display_name > b.display_name ? 1 : -1);
             }
 
         },
         methods: {
+
             activateInstance:async function(aInstance, isStartUp = false){
                 
                 this.AllInstances.forEach(x=>x.isActive = false);
-                this.AllInstances.find(x=>x.display_name==aInstance.display_name).isActive = true;
+                this.AllInstances.find(x=>x.id == aInstance.id).isActive = true;
 
-            }
+            },
         }
     })
     .mount('#app');
