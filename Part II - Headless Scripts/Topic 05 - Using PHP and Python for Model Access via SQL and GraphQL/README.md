@@ -18,3 +18,4 @@ THe GraphQL API can be easily accessed from browser scripts and also in headless
 ## 03 Traversing along Relationships using Explicit Path Description
 
 THe third script contains a TiqTraverser class that allows to describe traversal from an origin in the model. The type of relationship and properties of the target can be described explicitely.
+Script 03.1 includes a demo of how the TiqTraverser class is used.
