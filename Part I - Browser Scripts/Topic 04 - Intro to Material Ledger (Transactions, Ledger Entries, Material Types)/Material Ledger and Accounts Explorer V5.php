@@ -28,8 +28,8 @@ $user = Factory::getUser();
 
                 <h4>1. Accounts</h4>
                 <p>
-                    The left side of this page shows a listing of all accounts in your model. Use the search to filter and shorten the list. Searching works accumulatively, 
-                    for instance searching for "bin conveyor" will show only accounts where the name includes "bin" or "conveyor". We currently don't support any wildcards.
+                    The left side of this page shows a listing of all accounts in your model. Use the search to filter and shorten the list. Search terms are applied accumulatively, 
+                    for instance searching for "bin conveyor" will show accounts where the name includes "bin" and accounts where the name includes "conveyor". There is no wildcard support atm.
                 </p>
 
                 <h4>2. Ledger Entries Table</h4>
@@ -45,28 +45,29 @@ $user = Factory::getUser();
                     The term we use for each row in this tool is a transaction. Transactions contain multiple individual movements. Our system leans on the concepts of a double entry 
                     accounting system, so for each transaction, there are typically 2 individual movements: an outgoing and an incoming movement, or a debit (red down-arrow) and a credit (green up-arrow). 
                     If there are more than 2 movements in a single transaction, we show them in multiple rows as needed. For instance, a tank can be filled from 2 different 
-                    sources, which results in 2 debits and 1 credit. We always show before and after balance, as well as the amount. 
+                    sources, which results in 2 debits and 1 credit. We always show any account's before and after balance, as well as the amount. 
                 </p>
 
                 <h4>4. Tracing Material Movements</h4>
                 <p>
-                    In the source and target columns we also 
-                    show the account associated with the movement. The accounts can be clicked to navigate to that account and make it active. It's the same as if you were 
+                    In the source and target columns we show the account associated with the movement. The accounts can be clicked to navigate to that account and make it active. It's the same as if you were 
                     to select the account from the accounts list on the left. Thus "riding the ledger" allows to intuitively trace material movements up- and downstream. We 
                     highlight the movement you are navigating from by printing the text in red, which makes it easier to "see where you're coming from".
                 </p>
                 
-                <h4>5. Extras on Movements and Transactions</h4>
+                <h4>5. Available Actions on Movements and Transactions</h4>
                 <p>
                     Each movement can be expanded to show transaction details - we may allow users to edit ledger entries. If a movement has data stored in the document 
                     json column, we can show this as well.<br />
                     At the right end of each row there is a drop-down menu with actions: we can load the material flow diagram for a certain transaction and we can 
-                    delete ledger entries. On the top right of the table, we also have an action to delete all visible ledger entries. Please use these powers with care.
+                    delete ledger entries.<br />
+                    On the top right of the table, we have actions to export the visible table of transactions as a .csv file and also to delete all visible ledger entries.<br />
+                    Note, that delete actions are disabled by default. To enable delete actions click the trash icon on the top right of the page.
                 </p>
 
                 <br /><hr /><br />
                 
-                <h3>Technical Debt</h3>
+                <h3>Roadmap and Technical Debt</h3>
 
                 <h4>Pop-Up for Movements</h4>
                 <p>
@@ -75,7 +76,8 @@ $user = Factory::getUser();
 
                 <h4>CRUD Movements</h4>
                 <p>
-                    We wonder if we want to be able to edit and create material movements in this tool.
+                    We wonder if we want to be able to edit and create material movements in this tool. Editing existing material movements is inherently difficult, 
+                    since any change in an account's balance would require correcting of all balances of that account afterwards.
                 </p>
                 
             </div>
@@ -87,8 +89,19 @@ $user = Factory::getUser();
         <div class="col-12">
             <h1 class="pb-2 pt-2" style="font-size:2.5rem; color:#126181;">
                 {{pageTitle}}
-                <span class="float-end ms-1  mb-1" ><button class="btn btn-link mb-1" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" ><i class="fa fa-info-circle" ></i></button></span>
-                <a v-if="true" class="float-end btn btn-sm btn-link mt-2" style="font-size:1rem; color:#126181;" v-bind:href="`/index.php?option=com_modeleditor&view=script&id=${context.std_inputs.script_id}`" target="_blank">source</a>
+                <span class="float-end ms-1  mb-1" >
+                    <button class="btn btn-link mb-1" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" >
+                        <i class="fa fa-circle-question" data-toggle="tooltip" title="Help"></i>
+                    </button>
+                </span>
+                <span class="float-end ms-1  mb-1" >
+                    <button class="btn btn-link mb-1" @click="enableDeleteActions = !enableDeleteActions">
+                        <i :class="enableDeleteActions ? 'fa fa-trash-check' : 'fa fa-trash-xmark'" data-toggle="tooltip" :title="enableDeleteActions ? 'Lock Delete Actions' : 'Unlock Delete Actions'"></i>
+                    </button>
+                </span>
+                <a v-if="true" class="float-end btn btn-sm btn-link mt-2" style="font-size:1rem; color:#126181;" 
+                    v-bind:href="`/index.php?option=com_modeleditor&view=script&id=${context.std_inputs.script_id}`" target="_blank" data-toggle="tooltip" title="Show source code">source</a>
+
             </h1>
             <hr style="border-color:#126181; border-width:medium;" />
         </div>   
@@ -112,6 +125,7 @@ $user = Factory::getUser();
                                 {{aAccount.label}}
                                 <i v-if="aAccount.partOf==null" class="fa fa-link-slash" ></i>
                                 <i v-if="aAccount.partOf==null" class="fa fa-trash ms-2" @click="DeleteAccountAsync(aAccount)" data-toggle="tooltip" title="Delete orphaned account."></i>
+                                <i v-if="aAccount.partOf!=null && enableDeleteActions" class="fa fa-trash ms-2" @click="DeleteAccountAsync(aAccount)" data-toggle="tooltip" title="Delete account."></i>
                             </button>
                         </div>
                     </div>
@@ -162,7 +176,7 @@ $user = Factory::getUser();
                         <th style="border-left: 1px solid #dee2e6;" scope="col" colspan="1">
                             <i class="fa fa-ellipsis-v" style="cursor: pointer;" id="dropdownMenu2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
                             <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
-                                <button class="dropdown-item" type="button" @click="DeleteAllTransactionsAsync">
+                                <button :disabled="!enableDeleteActions" class="dropdown-item" type="button" @click="DeleteAllTransactionsAsync">
                                     <i class="fa fa-trash mr-1" aria-hidden="true" ></i>
                                     Delete All Visible Transactions ( x{{movements.length}} )
                                 </button>
@@ -294,7 +308,7 @@ $user = Factory::getUser();
                                                     <i class="fa fa-code-fork mr-1" aria-hidden="true" ></i>
                                                 Material Flow</a>
                                             </button>
-                                            <button class="dropdown-item" type="button" @click="DeleteTransactionAsync(aMovement.transactionId)">
+                                            <button :disabled="!enableDeleteActions" class="dropdown-item" type="button" @click="DeleteTransactionAsync(aMovement.transactionId)">
                                                 <i class="fa fa-trash mr-1" aria-hidden="true" ></i>
                                                 Delete Transaction
                                             </button>
@@ -469,6 +483,7 @@ $user = Factory::getUser();
         data() {
             return { 
                 showWaitIndicator: false,
+                enableDeleteActions: false,
                 tz: JSON.stringify(appTimeZones),
                 tp: JSON.stringify(appTimePeriods),
                 startDate: core.moment().tz(appTimeZones[0].value).add(-6,'h'),
