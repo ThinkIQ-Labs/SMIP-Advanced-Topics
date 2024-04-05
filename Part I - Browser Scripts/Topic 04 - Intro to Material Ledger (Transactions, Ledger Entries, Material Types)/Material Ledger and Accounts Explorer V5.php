@@ -337,6 +337,8 @@ $user = Factory::getUser();
                                         <input type="text" class="form-control" v-model="aMovement.sourceActivities[aIndex-1].endBalance" />
                                         <label>Amount</label>
                                         <input type="text" class="form-control" v-model="aMovement.sourceActivities[aIndex-1].amount" />
+                                        <label>Event Object ID's</label>
+                                        <input type="text" class="form-control" v-model="aMovement.sourceActivities[aIndex-1].objectEvents" />
                                         <button disabled class="btn btn-primary float-end mt-4">Update (soon)</button>
                                     </div>
                                     </div>
@@ -358,6 +360,8 @@ $user = Factory::getUser();
                                         <input type="text" class="form-control" v-model="aMovement.coreActivities[aIndex-1].endBalance" />
                                         <label>Amount</label>
                                         <input type="text" class="form-control" v-model="aMovement.coreActivities[aIndex-1].amount" />
+                                        <label>Event Object ID's</label>
+                                        <input type="text" class="form-control" v-model="aMovement.coreActivities[aIndex-1].objectEvents" />
                                         <button disabled class="btn btn-primary float-end mt-4">Update (soon)</button>
                                     </div>
                                     </div>
@@ -379,6 +383,8 @@ $user = Factory::getUser();
                                         <input type="text" class="form-control" v-model="aMovement.targetActivities[aIndex-1].endBalance" />
                                         <label>Amount</label>
                                         <input type="text" class="form-control" v-model="aMovement.targetActivities[aIndex-1].amount" />
+                                        <label>Event Object ID's</label>
+                                        <input type="text" class="form-control" v-model="aMovement.targetActivities[aIndex-1].objectEvents" />
                                         <button disabled class="btn btn-primary float-end mt-4">Update (soon)</button>
                                     </div>
                                     </div>
@@ -678,6 +684,7 @@ $user = Factory::getUser();
                                         startBalance
                                         endBalance
                                         document
+                                        objectEvents
                                         materialId
                                         material{
                                             id
