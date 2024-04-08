@@ -2,8 +2,12 @@
 
 //Purpose: this script serves as an api that can ...
 
-require_once 'thinkiq_context.php';
-$context = new Context();
+global $context;
+if(!isset($context)){
+    require_once 'thinkiq_context.php';
+    $context = new Context();
+}
+
 
 TiqUtilities\Model\Script::includeScript('api_demo.guzzle_client');
 

@@ -94,8 +94,8 @@
 <script>
     var WinDoc = window.document;
 
-    var app = new Vue({
-        el: "#app",
+    var app = createApp({
+        // el: "#app",
         data() {
             return {
                 pageTitle: 'API Demo.JS - a JavaScript SDK for Accessing the SMIP',
@@ -113,9 +113,9 @@
                 getLibraryByName: {},
                 showGetLibraryByName: false
 
-                getAvatarInput: 'Joda',
-                getAvatar: {},
-                showgetAvatar: false
+                // getAvatarInput: 'Joda',
+                // getAvatar: {},
+                // showgetAvatar: false
             }
         },
         mounted: function(){
@@ -141,10 +141,11 @@
                 this.getLibraryByName = await ApiDemoSdk.GetLibraryByNameAsync(this.getLibraryByNameInput);
             },
             
-            GetAvatarAsync: async function(){
-                this.getAvatar = await ApiDemoSdk.GetAvatarAsync(this.getAvatarInput);
-            }
+            // GetAvatarAsync: async function(){
+            //     this.getAvatar = await ApiDemoSdk.GetAvatarAsync(this.getAvatarInput);
+            // }
         }
-    });
+    })
+    .mount('#app');
 
 </script>

@@ -1,0 +1,46 @@
+<?php
+
+// Load Model Abstraction Library namespaces
+use TiqUtilities\Model\Type;
+use TiqUtilities\Model\Node;
+use TiqUtilities\Model\Equipment;
+use TiqUtilities\Model\Attribute;
+use TiqUtilities\Model\Account;
+use TiqUtilities\Model\Script;
+use TiqUtilities\Model\MeasurementUnit;
+use TiqUtilities\MaterialLedger\LedgerEntry;
+use TiqUtilities\TimeSeries\TimeSeries;
+
+require_once 'thinkiq_context.php';
+$context = new Context();
+
+if (!defined('JPATH_BASE')) define('JPATH_BASE', dirname(__DIR__));
+
+Script::includeScript('local_library.thinkiq_traverser');
+
+function loadDemo(){
+    $aTraverser = new TiqTraverser(new Node('some_org.some_area.some_machine'));
+    $aTraverser->addToRoute(TiqTraverser::CAN_FEED_DOWN, []);
+    $aTraverser->addToRoute(TiqTraverser::CAN_FEED_DOWN, array("display_name" => "Fancy Processor"));
+    $aTraverser->addToRoute(TiqTraverser::CAN_FEED_DOWN, []);
+    $aTraverser->addToRoute(TiqTraverser::CAN_FEED_DOWN, array("display_name" => "Product Inspection"));
+    return $aTraverser;
+}
+
+$aTraverser = loadDemo();
+$aTraverser->traverseGraph(removeFailedTraversals: false, echoOn: false);
+
+// var_dump($t->traversal);
+$t = $aTraverser->GetTraversals();
+$t_count = count($t);
+echo "Traversals found: $t_count" . PHP_EOL;
+echo "Cost: $aTraverser->traversalTreeCost DB calls." . PHP_EOL;
+
+foreach($t as $aTraversal){
+    $txt = '';
+    for($i=0; $i<count($aTraversal); $i++){
+        if($i>0) $txt .= ' -> ';
+        $txt .= $aTraversal[$i]->display_name;
+    }
+    echo $txt . PHP_EOL;
+}
