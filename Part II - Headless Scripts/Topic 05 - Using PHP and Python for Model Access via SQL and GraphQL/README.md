@@ -17,5 +17,15 @@ THe GraphQL API can be easily accessed from browser scripts and also in headless
 
 ## 03 Traversing along Relationships using Explicit Path Description
 
-THe third script contains a TiqTraverser class that allows to describe traversal from an origin in the model. The type of relationship and properties of the target can be described explicitely.
+The third script contains a TiqTraverser class that allows to describe traversal from an origin in the model. The type of relationship and properties of the target can be described explicitely.
 Script 03.1 includes a demo of how the TiqTraverser class is used.
+
+## 04 Get all Types and Instances in  a Model
+
+This script features the ::getNodeSet method that comes with most classes in the SMIP. You put your type of choice in front of it and you're ready to retrieve records.
+The snippet below retrieves all libraries and all types:
+
+``` PHP
+$allLibraries = TiqUtilities\Model\Library::getNodeSet("libraries")["set"];
+$allTypes = TiqUtilities\Model\Type::getNodeSet("types")["set"];
+```
