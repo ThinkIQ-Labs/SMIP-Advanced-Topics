@@ -15,11 +15,11 @@ $context = new Context();
 use TiqUtilities\Model\GenericObject;
  
 $aHost = new GenericObject($context->std_inputs->node_id);
-$aHost->getAttributes();
+$aHost->getAttributes(lazy_load:true);
 $aHost->getType();
 $aHost->type->getInstances();
 foreach($aHost->type->instances as $aInstance){
-    $aInstance->getAttributes();
+    $aInstance->getAttributes(lazy_load:true);
 }
 
 ?>
