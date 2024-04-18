@@ -103,6 +103,7 @@
                 pageTitle: 'API Demo.JS - a JavaScript SDK for Accessing the SMIP',
                 pageTitleShort: 'API Demo.JS Docs',
                 context:<?php echo json_encode($context)?>,
+                apiFileName: '<?php echo $php_api_file_name; ?>',
 
                 echoInput: '{"a":[23, 23, "asd"]}',
                 echoOutput: null,
