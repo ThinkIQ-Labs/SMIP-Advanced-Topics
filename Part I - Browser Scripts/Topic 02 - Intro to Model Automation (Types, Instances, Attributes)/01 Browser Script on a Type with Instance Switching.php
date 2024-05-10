@@ -14,13 +14,32 @@ $context = new Context();
 
 use TiqUtilities\Model\GenericObject;
  
+// $aHost = new GenericObject($context->std_inputs->node_id);
+// $aHost->getAttributes(lazy_load:true);
+// $aHost->getType();
+// $aHost->type->getInstances();
+// foreach($aHost->type->instances as $aInstance){
+//     $aInstance->getAttributes(lazy_load:true);
+// }
+
+// using aTinyHost to keep the footprint in the DOM smaller
 $aHost = new GenericObject($context->std_inputs->node_id);
-$aHost->getAttributes(lazy_load:true);
+$aTinyHost = new stdClass();
+$aTinyHost->id = $aHost->id;
+$aTinyHost->display_name = $aHost->display_name;
+$aTinyHost->type = new stdClass();
+$aTinyHost->type->instances = [];
+
 $aHost->getType();
 $aHost->type->getInstances();
 foreach($aHost->type->instances as $aInstance){
     $aInstance->getAttributes(lazy_load:true);
+    $aTinyInstance = new stdClass();
+    $aTinyInstance->id = $aInstance->id;
+    $aTinyInstance->display_name = $aInstance->display_name;
+    $aTinyHost->type->instances[$aInstance->id] = $aTinyInstance;
 }
+
 
 ?>
 
@@ -61,8 +80,8 @@ foreach($aHost->type->instances as $aInstance){
 
                 pageTitle: "Type Based Browser Script with Instance Switch",
                 context:<?php echo json_encode($context)?>,
-                host: <?php echo json_encode($aHost)?>,
-
+                // host: <?php echo json_encode($aHost)?>,
+                host: <?php echo json_encode($aTinyHost)?>,
             }
         },
         mounted: async function () {
