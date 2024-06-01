@@ -1,8 +1,9 @@
 // main.js
 var buttonManager = require("buttons");
 var http = require("http");
-var token = null;
+var token = "";
 var attrId = 0;
+var expEpoch = 0;
 
 const authenticator = {
 	"graphQlEndpoint": "https://xxx.xxx.thinkiq.net/graphql",
@@ -28,16 +29,17 @@ function getSendMessageQuery(aPayload){
 	return query;
 }
 
-function isTokenExpired() {
-	//console.log("token:", token);
-	if(token==null) return true;
-  const arrayToken = token.split('.');
-	const part2 = JSON.parse(new TextDecoder().decode(Duktape.dec('base64', arrayToken[1])));
-  return Math.floor(new Date().getTime() / 1000000) >= part2.sub;
+function isTokenValid() {
+	//console.log("isTokenExpired");
+	if(token=="") return false;
+  
+	//console.log(Math.floor(new Date().getTime() / 1000), expEpoch);
+  return Math.floor(new Date().getTime() / 1000) < expEpoch;
 }
 
 function withValidToken(callback){
-	if(!isTokenExpired(token)){
+	//console.log("withValidToken");
+	if(isTokenValid(token)){
 		callback()
 	}else{
 		http.makeRequest({
@@ -58,8 +60,8 @@ function withValidToken(callback){
 			}, function(err, res) {
 				var content = JSON.parse(res.content);
 				token = content.data.authenticationValidation.jwtClaim;
-				//console.log(token);
-				//console.log(isTokenExpired(token));
+				const arrayToken = token.split('.');
+				expEpoch = JSON.parse(new TextDecoder().decode(Duktape.dec('base64', arrayToken[1]))).exp;
 				
 				callback()
 			})
@@ -68,6 +70,7 @@ function withValidToken(callback){
 }
 
 function withAttributeID(callback){
+	//console.log("withAttributeID");
 	if(attrId != 0){
 		callback()
 	}else{
@@ -89,19 +92,15 @@ function withAttributeID(callback){
 }
 
 function withTokenAndAttributeID(callback){
+	//console.log("withTokenAndAttributeID");
 	withValidToken(function(){
 		withAttributeID(callback)
 	})
 }
 
-buttonManager.on("buttonSingleOrDoubleClickOrHold", function(obj) {
-	//console.log(JSON.stringify(obj));
-	var button = buttonManager.getButton(obj.bdaddr);
-	obj.button = button;
-	//console.log(JSON.stringify(button));
-	var clickType = obj.isSingleClick ? "click" : obj.isDoubleClick ? "double_click" : "hold";
-	
-	withTokenAndAttributeID(function(){
+function postMessage(obj){
+	//console.log("postMessage");
+	withTokenAndAttributeID(function(){	
 		http.makeRequest({
 			url: authenticator.graphQlEndpoint,
 			method: "POST",
@@ -111,9 +110,19 @@ buttonManager.on("buttonSingleOrDoubleClickOrHold", function(obj) {
 			var content = JSON.parse(res.content);
 			data = content.data;
 			//console.log(JSON.stringify(data));
+		})
+	})
+}
 
-
-
-		});
-	})		
+buttonManager.on("buttonSingleOrDoubleClickOrHold", function(obj) {
+	//console.log(JSON.stringify(obj));
+	var button = buttonManager.getButton(obj.bdaddr);
+	obj.button = button;
+	//message = obj;
+	//console.log(JSON.stringify(button));
+	var clickType = obj.isSingleClick ? "click" : obj.isDoubleClick ? "double_click" : "hold";
+	
+	postMessage(obj);
+			
 });
+
