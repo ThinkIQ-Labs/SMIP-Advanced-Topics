@@ -5,11 +5,11 @@ var token = null;
 var attrId = 0;
 
 const authenticator = {
-	"graphQlEndpoint": "https://services.dev.thinkiq.net/graphql",
-	"clientId": "ThinkIQ.GraphQL.UptimeService",
-	"clientSecret": "2a320cfc-5181-4029-8de2-3b7174bbe945",
-	"role": "services_ro_group",
-	"userName": "ThinkIQ.GraphQL.UptimeService",
+	"graphQlEndpoint": "https://xxx.xxx.thinkiq.net/graphql",
+	"clientId": "ThinkIQ.GraphQL.xxx",
+	"clientSecret": "xxx-xxx-xxx-xxx-xxx",
+	"role": "xxx_ro_group",
+	"userName": "ThinkIQ.GraphQL.xxx",
 };
 
 const authRequestQuery = 'mutation authRequest {authenticationRequest(input: {authenticator: "' + authenticator.clientId + '", role: "' + authenticator.role + '", userName: "' + authenticator.userName +'"}) {jwtRequest {challenge message}}}';
