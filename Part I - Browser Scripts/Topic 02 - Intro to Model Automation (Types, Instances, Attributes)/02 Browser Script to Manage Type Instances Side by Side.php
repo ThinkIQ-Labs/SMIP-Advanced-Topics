@@ -1,5 +1,17 @@
 <?php
 
+// {
+//   "data": {
+//     "script": {
+//       "displayName": "Instance Dashboard",
+//       "relativeName": "instance_dashboard",
+//       "description": "To compare instances of types side by side.",
+//       "outputType": "BROWSER",
+//       "scriptType": "PHP"
+//     }
+//   }
+// }
+
 use Joomla\CMS\HTML\HTMLHelper;
 
 HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.core.js',            array('version' => 'auto', 'relative' => false));
