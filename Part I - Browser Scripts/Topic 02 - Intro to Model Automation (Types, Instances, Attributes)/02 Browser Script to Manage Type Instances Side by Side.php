@@ -425,6 +425,9 @@ query q1 {
       dataType
       sourceCategory
       importance
+      enumerationType {
+        enumerationNames
+      }
     }
     objectsByTypeId {
       id
@@ -449,6 +452,10 @@ query q1 {
         objectValue
         enumerationName
         enumerationValue
+        enumerationValues
+        enumerationType {
+          enumerationNames
+        }
         boolValue
         dataSource
         currentValue{
@@ -515,6 +522,12 @@ query q1 {
                             let aValue = null;
                             if(['INTERNAL','TAG','EXPRESSION'].includes(aAttribute.dataSource)){
                                 aValue = aAttribute.currentValue==null ? '-' : aAttribute.currentValue.value;
+                                // resolve enumerations
+                                if(aAttribute.dataType=='ENUMERATION' && aAttribute.currentValue!=null){
+                                    // get the index
+                                    let aIndex = aAttribute.enumerationValues.findIndex(x=>x==aAttribute.currentValue.value)
+                                    aValue = aAttribute.enumerationType.enumerationNames[aIndex];
+                                }
                                 aAttribute.allowEdit = false;
                             } else {
                                 switch(aAttribute.dataType){
