@@ -1,0 +1,87 @@
+<?php
+
+use TiqUtilities\Model\Type;
+
+require_once 'thinkiq_context.php';
+$context = new Context();
+
+if (!defined('JPATH_BASE')) define('JPATH_BASE', dirname(__DIR__));
+
+require_once JPATH_BASE . '/components/com_thinkiq/config.php';
+$config = new TiqConfig();
+
+// get all types
+$allTypes = Type::getNodeSet("types")["set"];
+$allTypeNames = [];
+foreach($allTypes as $aType){
+    $allTypeNames[] = $aType->relative_name;
+}
+
+// var_dump($allTypeNames);
+// die;
+
+// load csv data
+$dir    = dirname(__DIR__) . '/images/Models/';
+$file = 'item_master.csv';
+$rows   = array_map('str_getcsv', file($dir . $file));
+$header_row = array_shift($rows);
+// var_dump($header_row);
+
+
+$counter = 0;
+foreach($rows as $rowId => $row) {
+    if(!empty($row)){
+        // var_dump($row);
+
+        // find type by name
+        $aIndex=array_search($row[0], $allTypeNames);
+        if($aIndex===false){
+            echo "Type not found: $row[0]->relative_name" . PHP_EOL;
+        } else {
+            echo "Type found: $row[0]->relative_name" . PHP_EOL;
+            $aType = $allTypes[$aIndex];
+            // echo "Type name: $aType->display_name" . PHP_EOL;
+            
+            // create child type with name and description
+            $aNewType = new Type();
+            $aNewType->display_name = $row[1];              // name is in the csv
+            $aNewType->description = $row[2];               // description is in the csv
+            $aNewType->part_of_id = $aType->part_of_id;     // part of for a type is a library
+            $aNewType->sub_type_of_id = $aType->id;         // sub type of is the super type
+            $aNewType->save(); 
+            
+            // iterate through type_to_attribute_types to fill default values
+            $aNewType = new Type($aNewType->id);
+            $aNewType->getAttributes();
+            // var_dump($aNewType->attributes);
+            for($i=3; $i<count($header_row); $i++){
+                $aDataType = $aNewType->{$header_row[$i]}->data_type;
+                echo "\tHeader: $header_row[$i] Data type: $aDataType" . PHP_EOL;
+                // var_dump($aNewType->{$header_row[$i]}); die;
+                switch ($aDataType){
+                    case "string":
+                        $aNewType->{$header_row[$i]}->default_string_value = $row[$i];
+                        $aNewType->{$header_row[$i]}->save();
+                        break;
+                    case "float":
+                        $aNewType->{$header_row[$i]}->default_float_value = $row[$i];
+                        $aNewType->{$header_row[$i]}->save();
+                        break;
+                    default:
+                    [16]=>
+                        // maybe other data types to cover
+                        // string(18) "default_bool_value"
+                        // string(17) "default_int_value"
+                        // string(19) "default_float_value"         - DONE
+                        // string(20) "default_string_value"        - DONE
+                        // string(22) "default_datetime_value"
+                        // string(22) "default_interval_value"
+                        // string(27) "default_measurement_unit_id"
+                        echo "\t not supported." . PHP_EOL;
+                        break;
+                }
+            }
+            // die;
+        }
+    }
+}
