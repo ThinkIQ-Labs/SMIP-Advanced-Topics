@@ -123,23 +123,80 @@ $user = Factory::getUser();
             <div v-if="activeAttribute" class="my-4">
                 <div>
                     <hr />
-                    <h5>Insert Single Value</h5>
-                    <div class="my-1">
-                        <label style="width:120px;">New Timestamp</label>
-                        <input type="string" @input="newDateTimeMoment=null" v-model="newDateTimeString"/>
-                        <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(false)">Parse as {{activeTimeZone.value}}</button>
-                        <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(true)">Parse as UTC</button>
-                        ISO: {{newDateTimeMoment ? newDateTimeMoment.toISOString() : '---'}}
-                    </div>
-                    <div class="my-1">
-                        <label style="width:120px;">Status</label><input type="number" v-model="newStatus"/>
-                    </div>
-                    <div class="my-1">
-                        <label style="width:120px;">Value</label><input type="string" v-model="newValue"/>
-                        <button :disabled="newDateTimeMoment==null" class="btn btn-sm btn-primary ms-4" @click="InsertNewRecordAsync">Insert New Record</button>
-                        <span v-if="mutationResponse">{{JSON.stringify(mutationResponse)}}</span>
-                    </div>
+                    <h5>
+                        <span class="mx-3" :style="activeNewDataMode.name=='single record' ? 'font-weight:500;' : 'font-weight:400; cursor: pointer;'" @click="ActivateNewDataMode('single record')">Insert Single Value</span>
+                        <span class="mx-3" :style="activeNewDataMode.name=='generate series' ? 'font-weight:500;' : 'font-weight:400; cursor: pointer;'"  @click="ActivateNewDataMode('generate series')">Generate Series</span>
+                        <span class="mx-3" :style="activeNewDataMode.name=='paste from excel' ? 'font-weight:500;' : 'font-weight:400; cursor: pointer;'"  @click="ActivateNewDataMode('paste from excel')">Paste from Excel</span>
+                    </h5>
                     <hr />
+                    <div v-if="activeNewDataMode.name=='single record'">
+                        <div class="my-1">
+                            <label style="width:120px;">New Timestamp</label>
+                            <input type="string" @input="newDateTimeMoment=null" v-model="newDateTimeString"/>
+                            <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(false)">Parse as {{activeTimeZone.value}}</button>
+                            <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(true)">Parse as UTC</button>
+                            ISO: {{newDateTimeMoment ? newDateTimeMoment.toISOString() : '---'}}
+                        </div>
+                        <div class="my-1">
+                            <label style="width:120px;">Status</label><input type="number" v-model="newStatus"/>
+                        </div>
+                        <div class="my-1">
+                            <label style="width:120px;">Value</label><input type="string" v-model="newValue"/>
+                            <button :disabled="newDateTimeMoment==null" class="btn btn-sm btn-primary ms-4" @click="InsertNewRecordAsync">Insert New Record</button>
+                            <span v-if="mutationResponse">{{JSON.stringify(mutationResponse)}}</span>
+                        </div>
+                        <hr />
+                    </div>
+                    <div v-if="activeNewDataMode.name=='generate series'">
+                        <div class="my-1">
+                            <label style="width:120px;">Seed Timestamp</label>
+                            <input type="string" @input="newDateTimeMoment=null" v-model="newDateTimeString"/>
+                            <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(false)">Parse as {{activeTimeZone.value}}</button>
+                            <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(true)">Parse as UTC</button>
+                            ISO: {{newDateTimeMoment ? newDateTimeMoment.toISOString() : '---'}}
+                        </div>
+                        <div class="my-1">
+                            <label style="width:120px;">
+                                Interval
+                                <i class="fa fa-circle-info" data-toggle="tooltip" title="Period of Time: ISO 8601 duration, for instance P1DT8H for 1 day and 8 hours."></i>
+                            </label>
+                            <input type="string" v-model="newSeriesInterval"/>
+                        </div>
+                        <div class="my-1">
+                            <label style="width:120px;">
+                                Element Count 
+                                <i class="fa fa-circle-info" data-toggle="tooltip" title="Number of Elements to create in the series."></i>
+                            </label>
+                            <input type="number" v-model="newSeriesCount"/>
+                            <button :disabled="newDateTimeMoment==null || newSeriesCount < 1 || moment.duration(newSeriesInterval).valueOf()==0" class="btn btn-sm btn-primary ms-4" @click="GenerateSeries">Generate Series</button>
+                            <span v-if="mutationResponse">{{JSON.stringify(mutationResponse)}}</span>
+                        </div>
+                        <table v-if="newSeries.length>0" class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Value</th>
+                                    <th scope="col">Status</th>
+                                <th scope="col">ts (ISO)</th>
+                                <th scope="col">ts (locale)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(aVst,i) in newSeries">
+                                    <th scope="row">{{i+1}}</th>
+                                    <td>{{aVst.value}}</td>
+                                    <td>{{aVst.status}}</td>
+                                    <td>{{aVst.timestamp.toISOString()}}</td>
+                                    <td>{{aVst.timestamp.format('YYYY-MM-DD HH:mm:SS')}}</td>
+                                </tr>
+                        </table>
+                        <button class="btn btn-sm btn-primary m-2" @click="InsertNewSeriesAsync">Write Series to Attribute</button>
+                        <hr />
+                    </div>
+                    <div v-if="activeNewDataMode.name=='paste from excel'">
+                        <span> paste from excel </span>
+                        <hr />
+                    </div>
                 </div>
 
                 <div style="overflow-y: automatic; max-height: 800px;">
@@ -277,8 +334,30 @@ $user = Factory::getUser();
                 newStatus: 0,
                 newDateTimeString: moment().format('YYYY-MM-DD HH:00:00'),
                 newDateTimeMoment: null,
+                
+                newSeries: [],
+                newSeriesCount: 3,
+                newSeriesInterval: 'PT8H',
 
-                mutationResponse: null
+                mutationResponse: null,
+
+                newDataModes: [
+                    {
+                        name: "single record",
+                        isActive: true
+                    },
+                    {
+                        name: "generate series",
+                        isActive: false
+                    },
+                    {
+                        name: "paste from excel",
+                        isActive: false
+                    },
+
+                ],
+
+                
             }
         },
         mounted: async function () {
@@ -288,6 +367,9 @@ $user = Factory::getUser();
         computed: {
             activeTimeZone: function(){
                 return this.$refs.datePicker.timezone=='0' ? null : appTimeZones.find(x=>x.id==this.$refs.datePicker.timezone);
+            },
+            activeNewDataMode: function(){
+                return this.newDataModes.find(x=>x.isActive);
             },
             fieldToRetrieve: function(){
                 switch(this.activeAttribute.dataType){
@@ -301,6 +383,25 @@ $user = Factory::getUser();
             }
         },
         methods: {
+            GenerateSeries: async function(){
+                this.newSeries = [];
+                let newSeries = [];
+                let timestamp = this.newDateTimeMoment.clone();
+                for(let i=0; i<this.newSeriesCount; i++){
+                    newSeries.push({
+                        value: i,
+                        status: 0,
+                        timestamp: i==0 ? timestamp : newSeries[i-1].timestamp.clone().add(this.newSeriesInterval)
+                    });
+                }
+                this.newSeries = newSeries;
+            },
+            ActivateNewDataMode: async function(aModeName){
+                if(this.activeNewDataMode.name!=aModeName){
+                    this.newDataModes.forEach(x=>x.isActive=false);
+                    this.newDataModes.find(x=>x.name==aModeName).isActive = true;
+                }
+            },
             DeleteRecordAsync: async function(aVst){
                     let query = `
                         mutation m1 {
@@ -318,6 +419,29 @@ $user = Factory::getUser();
                     let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
                     this.mutationResponse = aResponse.data.replaceTimeSeriesRange;
                     await this.FetchAttributeAsync();
+            },
+            InsertNewSeriesAsync: async function(){
+                    let valueArray = this.newSeries.map(x=>`{value:"${x.value}",status: "0",timestamp:"${x.timestamp.toISOString()}"}`).join(',');
+                    let query = `
+                        mutation m1 {
+                            replaceTimeSeriesRange(
+                                input: {
+                                    attributeOrTagId: "${this.activeAttribute.id}"
+                                    entries: [${valueArray}]
+                                }
+                            ){
+                                json
+                            }
+                        } 
+                    `;
+                    console.log(query);
+                    let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
+                    if(aResponse.errors){
+                        this.mutationResponse = aResponse.errors;
+                    } else {
+                        this.mutationResponse = aResponse.data.replaceTimeSeriesRange;
+                        await this.FetchAttributeAsync();
+                    }
             },
             InsertNewRecordAsync: async function(){
                     let query = `
