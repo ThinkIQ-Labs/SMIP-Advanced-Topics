@@ -421,7 +421,13 @@ $user = Factory::getUser();
                     await this.FetchAttributeAsync();
             },
             InsertNewSeriesAsync: async function(){
-                    let valueArray = this.newSeries.map(x=>`{value:"${x.value}",status: "0",timestamp:"${x.timestamp.toISOString()}"}`).join(',');
+
+                    let valueArray = this.newSeries.map(x=>`{
+                        value:"${x.value}",
+                        status: "0",
+                        timestamp:"${x.timestamp.toISOString()}"
+                    }`).join(',');
+
                     let query = `
                         mutation m1 {
                             replaceTimeSeriesRange(
@@ -434,8 +440,11 @@ $user = Factory::getUser();
                             }
                         } 
                     `;
+
                     console.log(query);
+
                     let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
+                    
                     if(aResponse.errors){
                         this.mutationResponse = aResponse.errors;
                     } else {
