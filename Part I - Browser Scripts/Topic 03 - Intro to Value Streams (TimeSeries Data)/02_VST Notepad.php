@@ -41,8 +41,8 @@ $user = Factory::getUser();
 
     <div class="row" :style="`max-width:${pageWidth * 0.98}px;`">
         <div class="col-2">
-            <span data-toggle="tooltip" title="Pick target attribute.">
-                <tree-picker class="my-2"
+            <span class="my-2 me-2" data-toggle="tooltip" title="Pick attribute to get started.">
+                <tree-picker 
                     :picker-name='`attribute_picker`'
                     display-mode='instance'
                     content='Select a target attribute'
@@ -55,16 +55,37 @@ $user = Factory::getUser();
                     :leaf-types='["attribute","tag"]'
                     @on-select="OnSelectAttributeAsync"
                 ></tree-picker>
-            </span><br/>
-            <span v-if="activeAttribute">
-                Active Attribute: {{activeAttribute.displayName}} <button class="btn btn-sm btn-primary ms-2" @click="FetchAttributeAsync(activeAttribute.id)">Refresh</button><br />
-                Data Type: {{activeAttribute.dataType}}<br />
-                <span v-if="activeAttribute.currentValue">
+            </span>
+            <span v-if="!activeAttribute">Pick attribute to get started</span>
+            <br/>
+            <div v-if="activeAttribute">
+                <div>
+                    Active Attribute: {{activeAttribute.displayName}} <button class="btn btn-sm btn-primary ms-2" @click="FetchAttributeAsync(activeAttribute.id)">Refresh</button><br />
+                    Data Type: {{activeAttribute.dataType}}<br />
+                </div>
+                <div v-if="activeAttribute.currentValue">
                     <b>Current Value</b><br />
                     Value: {{activeAttribute.currentValue.value}}<br />
                     TS: {{activeAttribute.currentValue.timestamp}}<br />
-                </span>
-            </span>
+                </div>
+                <div v-if="activeAttribute.dataType=='ENUMERATION'">
+                    <b>Enumeration</b><br />
+                    Type: {{activeAttribute.enumerationType.displayName}}
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(aChoice,i) in activeAttribute.enumerationValues">
+                                <th scope="row">{{activeAttribute.enumerationType.enumerationNames[i]}}</th>
+                                <td>{{aChoice}}</td>
+                            </tr>
+                    </table>
+                </div>
+            </div>
         </div>
         <div class="col-10">
             <duration-picker
@@ -100,21 +121,25 @@ $user = Factory::getUser();
             <button class="btn btn-light btn-sm" @click="PasteTimePeriod">Paste Time Period</button>
 
             <div v-if="activeAttribute" class="my-4">
-                
-                <div class="my-1">
-                    <label style="width:120px;">New Timestamp</label>
-                    <input type="string" @input="newDateTimeMoment=null" v-model="newDateTimeString"/>
-                    <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(false)">Parse as {{activeTimeZone.value}}</button>
-                    <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(true)">Parse as UTC</button>
-                    ISO: {{newDateTimeMoment ? newDateTimeMoment.toISOString() : '---'}}
-                </div>
-                <div class="my-1">
-                    <label style="width:120px;">Status</label><input type="number" v-model="newStatus"/>
-                </div>
-                <div class="my-1">
-                    <label style="width:120px;">Value</label><input type="string" v-model="newValue"/>
-                    <button :disabled="newDateTimeMoment==null" class="btn btn-sm btn-primary ms-4" @click="InsertNewRecordAsync">Insert New Record</button>
-                    <span v-if="mutationResponse">{{JSON.stringify(mutationResponse)}}</span>
+                <div>
+                    <hr />
+                    <h5>Insert Single Value</h5>
+                    <div class="my-1">
+                        <label style="width:120px;">New Timestamp</label>
+                        <input type="string" @input="newDateTimeMoment=null" v-model="newDateTimeString"/>
+                        <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(false)">Parse as {{activeTimeZone.value}}</button>
+                        <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(true)">Parse as UTC</button>
+                        ISO: {{newDateTimeMoment ? newDateTimeMoment.toISOString() : '---'}}
+                    </div>
+                    <div class="my-1">
+                        <label style="width:120px;">Status</label><input type="number" v-model="newStatus"/>
+                    </div>
+                    <div class="my-1">
+                        <label style="width:120px;">Value</label><input type="string" v-model="newValue"/>
+                        <button :disabled="newDateTimeMoment==null" class="btn btn-sm btn-primary ms-4" @click="InsertNewRecordAsync">Insert New Record</button>
+                        <span v-if="mutationResponse">{{JSON.stringify(mutationResponse)}}</span>
+                    </div>
+                    <hr />
                 </div>
 
                 <div style="overflow-y: automatic; max-height: 800px;">
@@ -218,6 +243,12 @@ $user = Factory::getUser();
         {"id":"8","name":"Last 7 days","duration":"PT168H","end_date":"now"}
     ];
 
+    // this is the coolest delay function ever
+    // use like this to wait 100ms: await delay(100);
+    // https://levelup.gitconnected.com/how-to-turn-settimeout-and-setinterval-into-promises-6a4977f0ace3
+    function delay(time) {
+        return new Promise(resolve => setTimeout(resolve, time));
+    }
 
     var app = createApp({
         // el: "#app",
@@ -262,6 +293,8 @@ $user = Factory::getUser();
                 switch(this.activeAttribute.dataType){
                     case "FLOAT":
                         return "floatvalue";
+                    case "ENUMERATION":
+                        return "intvalue";
                     default:
                         return "null";
                 }
@@ -284,7 +317,6 @@ $user = Factory::getUser();
                     `;
                     let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
                     this.mutationResponse = aResponse.data.replaceTimeSeriesRange;
-                    await this.FetchTsDataAsync();
                     await this.FetchAttributeAsync();
             },
             InsertNewRecordAsync: async function(){
@@ -305,9 +337,12 @@ $user = Factory::getUser();
                         } 
                     `;
                     let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
-                    this.mutationResponse = aResponse.data.replaceTimeSeriesRange;
-                    await this.FetchTsDataAsync();
-                    await this.FetchAttributeAsync();
+                    if(aResponse.errors){
+                        this.mutationResponse = aResponse.errors;
+                    } else {
+                        this.mutationResponse = aResponse.data.replaceTimeSeriesRange;
+                        await this.FetchAttributeAsync();
+                    }
             },
             ValidateTimestamp: function(isUtc){
                 let aMoment = null;
@@ -357,16 +392,30 @@ $user = Factory::getUser();
                 if(aAttributeId){
 
                 } else {
-                    if(!this.activeAttribute){
-                        if(this.activeAttribute){
-                            aAttributeId = this.activeAttribute.id;
-                        } else {
-                            return false;
-                        }
+                    if(this.activeAttribute){
+                        aAttributeId = this.activeAttribute.id;
+                    } else {
+                        return false;
                     }
                 }
                 let query = `
-                    query q1{attribute(id:"${aAttributeId}"){id displayName dataType dataSource currentValue{ value timestamp } }}
+                    query q1{
+                        attribute(id:"${aAttributeId}"){
+                            id 
+                            displayName 
+                            dataType 
+                            dataSource 
+                            enumerationValues
+                            enumerationType{
+                                displayName
+                                enumerationNames
+                            }
+                            currentValue{ 
+                                value 
+                                timestamp 
+                            } 
+                        }
+                    }
                 `;
                 let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
                 let aAttribute = aResponse.data.attribute;
@@ -381,19 +430,33 @@ $user = Factory::getUser();
             FetchTsDataAsync: async function(){
                 if(this.activeAttribute!=null){
                     this.tsData = [];
-                    let query = `
-                        query q1{
-                            attribute(id:"${this.activeAttribute.id}"){
-                                getTimeSeries(startTime:"${this.startDate.toISOString()}" endTime:"${this.endDate.toISOString()}"){
-                                    ts
-                                    status
-                                    ${this.fieldToRetrieve}
-                                }
-                            }
-                        }
-                    `;
-                    let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
-                    this.tsData = aResponse.data.attribute.getTimeSeries;
+                    // let query = `
+                    //     query q1{
+                    //         attribute(id:"${this.activeAttribute.id}"){
+                    //             getTimeSeries(startTime:"${this.startDate.toISOString()}" endTime:"${this.endDate.toISOString()}"){
+                    //                 ts
+                    //                 status
+                    //                 ${this.fieldToRetrieve}
+                    //             }
+                    //         }
+                    //     }
+                    // `;
+                    // let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
+                    // this.tsData = aResponse.data.attribute.getTimeSeries;
+
+                    let response = await fetch(`./index.php?option=com_thinkiq&task=thinkiq.getTimeseries&ids=${this.activeAttribute.id}&start=${this.startDate.valueOf()}&end=${this.endDate.valueOf()}`);
+                    let json = await response.json();
+                    let attrData = json[Object.keys(json)[0]];
+                    console.log(json);
+                    let tsData = [];
+                    attrData.values.forEach((aValue, i) => {
+                        tsData.push({
+                            [this.fieldToRetrieve]: aValue,
+                            status: attrData.statuses[i],
+                            ts: attrData.timestamps[i]
+                        });
+                    });
+                    this.tsData = tsData;
                 }
             }
         },
