@@ -168,7 +168,10 @@ $user = Factory::getUser();
                                 <i class="fa fa-circle-info" data-toggle="tooltip" title="Number of Elements to create in the series."></i>
                             </label>
                             <input type="number" v-model="newSeriesCount"/>
-                            <button :disabled="newDateTimeMoment==null || newSeriesCount < 1 || moment.duration(newSeriesInterval).valueOf()==0" class="btn btn-sm btn-primary ms-4" @click="GenerateSeries">Generate Series</button>
+                            <button :disabled="newDateTimeMoment==null || newSeriesCount < 1 || moment.duration(newSeriesInterval).valueOf()==0" class="btn btn-sm btn-primary m-2" @click="GenerateSeries">
+                                Generate Series
+                            </button>
+                            <i class="fa fa-circle-info ms-2" data-toggle="tooltip" :title="(newDateTimeMoment==null || newSeriesCount < 1 || moment.duration(newSeriesInterval).valueOf()==0) ? 'Validate the seed date first.' : 'Generate the series.'"></i>
                             <span v-if="mutationResponse">{{JSON.stringify(mutationResponse)}}</span>
                         </div>
                         <table v-if="newSeries.length>0" class="table table-sm">
@@ -190,7 +193,10 @@ $user = Factory::getUser();
                                     <td>{{aVst.timestamp.format('YYYY-MM-DD HH:mm:SS')}}</td>
                                 </tr>
                         </table>
-                        <button class="btn btn-sm btn-primary m-2" @click="InsertNewSeriesAsync">Write Series to Attribute</button>
+                        <button :disabled="newSeries.length == 0"class="btn btn-sm btn-primary m-2" @click="InsertNewSeriesAsync">
+                            Write Series to Attribute
+                        </button>
+                        <i class="fa fa-circle-info ms-2" data-toggle="tooltip" :title="newSeries.length == 0 ? 'Generate a series first.' : 'Save data to attribute.'"></i>
                         <hr />
                     </div>
                     <div v-if="activeNewDataMode.name=='paste from excel'">
