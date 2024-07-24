@@ -34,6 +34,7 @@ $user = Factory::getUser();
             <h1 class="pb-2 pt-2" style="font-size:2.5rem; color:#126181;">
                 {{pageTitle}}
                 <a v-if="true" class="float-end btn btn-sm btn-link mt-2" style="font-size:1rem; color:#126181;" v-bind:href="`/index.php?option=com_modeleditor&view=script&id=${context.std_inputs.script_id}`" target="_blank">source</a>
+                <button class="btn btn-sm btn-secondary float-end m-2" @click="showStatus = !showStatus">toggle status</button>
             </h1>
             <hr style="border-color:#126181; border-width:medium;" />
         </div>   
@@ -137,7 +138,7 @@ $user = Factory::getUser();
                             <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(true)">Parse as UTC</button>
                             ISO: {{newDateTimeMoment ? newDateTimeMoment.toISOString() : '---'}}
                         </div>
-                        <div class="my-1">
+                        <div class="my-1" v-show="showStatus">
                             <label style="width:120px;">Status</label><input type="number" v-model="newStatus"/>
                         </div>
                         <div class="my-1">
@@ -179,16 +180,16 @@ $user = Factory::getUser();
                                 <tr>
                                     <th scope="col">#</th>
                                     <th scope="col">Value</th>
-                                    <th scope="col">Status</th>
-                                <th scope="col">ts (ISO)</th>
-                                <th scope="col">ts (locale)</th>
+                                    <th scope="col" v-show="showStatus">Status</th>
+                                    <th scope="col">ts (ISO)</th>
+                                    <th scope="col">ts (locale)</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="(aVst,i) in newSeries">
                                     <th scope="row">{{i+1}}</th>
                                     <td>{{aVst.value}}</td>
-                                    <td>{{aVst.status}}</td>
+                                    <td v-show="showStatus">{{aVst.status}}</td>
                                     <td>{{aVst.timestamp.toISOString()}}</td>
                                     <td>{{aVst.timestamp.format('YYYY-MM-DD HH:mm:SS')}}</td>
                                 </tr>
@@ -209,19 +210,21 @@ $user = Factory::getUser();
                     <table class="table table-sm table-hover">
                         <thead>
                             <tr>
-                                <th scope="col">ts (Postgres)</th>
+                                <th scope="col">ts (ISO)</th>
                                 <th scope="col">ts (locale)</th>
-                                <th scope="col">Status</th>
+                                <th scope="col" v-show="showStatus">Status</th>
                                 <th scope="col">Value</th>
+                                <th v-if="activeAttribute.dataType=='ENUMERATION'" scope="col">Enum Match</th>
                                 <th scope="col">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="aVst in tsData">
-                                <th scope="row">{{aVst.ts}}</th>
+                                <th scope="row">{{moment(aVst.ts).toISOString()}}</th>
                                 <td>{{moment(aVst.ts).tz(activeTimeZone.value).format('YYYY-MM-DD HH:mm:SS')}}</td>
-                                <td>{{aVst.status}}</td>
+                                <td v-show="showStatus">{{aVst.status}}</td>
                                 <td>{{aVst[this.fieldToRetrieve]}}</td>
+                                <td v-if="activeAttribute.dataType=='ENUMERATION'" scope="col">{{aVst.enumMatch}}</td>
                                 <td>
                                     <i class="fa fa-ellipsis-v" style="cursor: pointer;" id="dropdownMenu2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
                                     <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
@@ -324,6 +327,8 @@ $user = Factory::getUser();
                 context:<?php echo json_encode($context)?>,
                 user:<?php echo json_encode($user)?>,
 
+                showStatus: false,
+
                 // stuff for duration picker
                 tz: JSON.stringify(appTimeZones),
                 tp: JSON.stringify(appTimePeriods),
@@ -381,8 +386,14 @@ $user = Factory::getUser();
                 switch(this.activeAttribute.dataType){
                     case "FLOAT":
                         return "floatvalue";
-                    case "ENUMERATION":
+                    case "INT":
                         return "intvalue";
+                    case "BOOLEAN":
+                        return "boolvalue";
+                    case "STRING":
+                        return "stringvalue";
+                    case "ENUMERATION":
+                        return "enumerationvalue";
                     default:
                         return "null";
                 }
@@ -569,33 +580,48 @@ $user = Factory::getUser();
             FetchTsDataAsync: async function(){
                 if(this.activeAttribute!=null){
                     this.tsData = [];
-                    // let query = `
-                    //     query q1{
-                    //         attribute(id:"${this.activeAttribute.id}"){
-                    //             getTimeSeries(startTime:"${this.startDate.toISOString()}" endTime:"${this.endDate.toISOString()}"){
-                    //                 ts
-                    //                 status
-                    //                 ${this.fieldToRetrieve}
-                    //             }
-                    //         }
-                    //     }
-                    // `;
-                    // let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
-                    // this.tsData = aResponse.data.attribute.getTimeSeries;
+                    let query = `
+                        query q1{
+                            getRawHistoryDataWithSampling(
+                                ids:"${this.activeAttribute.id}" 
+                                startTime:"${this.startDate.toISOString()}" 
+                                endTime:"${this.endDate.toISOString()}"
+                            ){
+                                ts
+                                status
+                                ${this.fieldToRetrieve}
+                            }
+                        }
+                    `;
 
-                    let response = await fetch(`./index.php?option=com_thinkiq&task=thinkiq.getTimeseries&ids=${this.activeAttribute.id}&start=${this.startDate.valueOf()}&end=${this.endDate.valueOf()}`);
-                    let json = await response.json();
-                    let attrData = json[Object.keys(json)[0]];
-                    console.log(json);
-                    let tsData = [];
-                    attrData.values.forEach((aValue, i) => {
-                        tsData.push({
-                            [this.fieldToRetrieve]: aValue,
-                            status: attrData.statuses[i],
-                            ts: attrData.timestamps[i]
-                        });
+                    let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
+                    let tsData = aResponse.data.getRawHistoryDataWithSampling;
+
+                    tsData.forEach(aVst => {
+                        aVst.isEditMode = false;
+                        aVst.editValue = aVst[this.fieldToRetrieve];
+                        aVst.editTimestamp = moment(aVst.ts).tz(this.activeTimeZone.value).format('YYYY-MM-DD HH:mm:SS');
+                        if(this.activeAttribute.dataType=='ENUMERATION'){
+                            let aIndex = this.activeAttribute.enumerationValues.findIndex(x=>x==aVst[this.fieldToRetrieve]);
+                            aVst.enumMatch= aIndex == -1 ? '---' : this.activeAttribute.enumerationType.enumerationNames[aIndex];
+                        }
                     });
+
                     this.tsData = tsData;
+
+                    // let response = await fetch(`./index.php?option=com_thinkiq&task=thinkiq.getTimeseries&ids=${this.activeAttribute.id}&start=${this.startDate.valueOf()}&end=${this.endDate.valueOf()}`);
+                    // let json = await response.json();
+                    // let attrData = json[Object.keys(json)[0]];
+                    // console.log(json);
+                    // let tsData = [];
+                    // attrData.values.forEach((aValue, i) => {
+                    //     tsData.push({
+                    //         [this.fieldToRetrieve]: aValue,
+                    //         status: attrData.statuses[i],
+                    //         ts: attrData.timestamps[i]
+                    //     });
+                    // });
+                    // this.tsData = tsData;
                 }
             }
         },
