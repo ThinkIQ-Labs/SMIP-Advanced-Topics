@@ -220,14 +220,43 @@ $user = Factory::getUser();
                         </thead>
                         <tbody>
                             <tr v-for="aVst in tsData">
-                                <th scope="row">{{moment(aVst.ts).toISOString()}}</th>
-                                <td>{{moment(aVst.ts).tz(activeTimeZone.value).format('YYYY-MM-DD HH:mm:SS')}}</td>
+                                <th scope="row">
+                                    <span v-if="!aVst.isEditMode">
+                                        {{moment(aVst.ts).toISOString()}}
+                                    </span>
+                                    <span v-else>
+                                        {{moment(aVst.editTimestamp).tz(activeTimeZone.value).toISOString()}}
+                                    </span>
+                                </th>
+                                <td>
+                                    <span v-if="!aVst.isEditMode">
+                                        {{moment(aVst.ts).tz(activeTimeZone.value).format('YYYY-MM-DD HH:mm:SS')}}
+                                    </span>
+                                    <input v-else v-model="aVst.editTimestamp" />
+                                </td>
                                 <td v-show="showStatus">{{aVst.status}}</td>
-                                <td>{{aVst[this.fieldToRetrieve]}}</td>
+                                <td>
+                                    <span v-if="!aVst.isEditMode">
+                                        {{aVst[this.fieldToRetrieve]}}
+                                    </span>
+                                    <input v-else v-model="aVst.editValue" />
+                                </td>
                                 <td v-if="activeAttribute.dataType=='ENUMERATION'" scope="col">{{aVst.enumMatch}}</td>
                                 <td>
                                     <i class="fa fa-ellipsis-v" style="cursor: pointer;" id="dropdownMenu2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
                                     <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
+                                        <button v-show="!aVst.isEditMode" class="dropdown-item" type="button" @click="ToggleEditModeAsync(aVst)">
+                                            <i class="fa fa-pencil mr-1" aria-hidden="true" ></i>
+                                            Edit Record
+                                        </button>
+                                        <button v-show="aVst.isEditMode" class="dropdown-item" type="button" @click="ToggleEditModeAsync(aVst, true)">
+                                            <i class="fa fa-save mr-1" aria-hidden="true" ></i>
+                                            Save Record
+                                        </button>
+                                        <button v-show="aVst.isEditMode" class="dropdown-item" type="button" @click="ToggleEditModeAsync(aVst, false)">
+                                            <i class="fa fa-x mr-1" aria-hidden="true" ></i>
+                                            Discard Changes
+                                        </button>
                                         <button class="dropdown-item" type="button" @click="DeleteRecordAsync(aVst)">
                                             <i class="fa fa-trash mr-1" aria-hidden="true" ></i>
                                             Delete Record
@@ -400,6 +429,55 @@ $user = Factory::getUser();
             }
         },
         methods: {
+            ToggleEditModeAsync: async function(aVst, doSave){
+                if(aVst.isEditMode){
+                    // get out of edit mode, but possibly save
+                    if(doSave){
+                        
+                        let oldTimestamp = moment(aVst.ts).toISOString();
+                        let newTimestamp = moment(aVst.editTimestamp).tz(this.activeTimeZone.value).toISOString();
+                        
+                        if( newTimestamp != oldTimestamp ){
+                            // if the timestamp is different we first purge the existing record
+                            await this.DeleteRecordAsync(aVst);
+                        } 
+
+                        let query = `
+                            mutation m1 {
+                                replaceTimeSeriesRange(
+                                    input: {
+                                        attributeOrTagId: "${this.activeAttribute.id}"
+                                        entries: {
+                                            value:"${aVst.editValue}",
+                                            status: "${aVst.status}",
+                                            timestamp:"${newTimestamp}"
+                                        }
+                                    }
+                                ){
+                                    json
+                                }
+                            } 
+                        `;
+
+                        let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
+                        if(newTimestamp != oldTimestamp){
+                            // append the response
+                            this.mutationResponse.json2 = aResponse.data.replaceTimeSeriesRange.json;
+                        } else {
+                            this.mutationResponse = aResponse.data.replaceTimeSeriesRange;
+                        }
+                        await this.FetchAttributeAsync();
+
+                    } else {
+                        aVst.editTimestamp = moment(aVst.ts).tz(this.activeTimeZone.value).format('YYYY-MM-DD HH:mm:SS');
+                        aVst.editValue = aVst[this.fieldToRetrieve];
+                    }
+                    aVst.isEditMode = false;
+                } else {
+                    // toggle record into edit mode
+                    aVst.isEditMode = true;
+                }
+            },
             GenerateSeries: async function(){
                 this.newSeries = [];
                 let newSeries = [];
