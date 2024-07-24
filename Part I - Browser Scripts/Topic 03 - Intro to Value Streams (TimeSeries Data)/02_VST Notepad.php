@@ -128,14 +128,15 @@ $user = Factory::getUser();
                         <span class="mx-3" :style="activeNewDataMode.name=='single record' ? 'font-weight:500;' : 'font-weight:400; cursor: pointer;'" @click="ActivateNewDataMode('single record')">Insert Single Value</span>
                         <span class="mx-3" :style="activeNewDataMode.name=='generate series' ? 'font-weight:500;' : 'font-weight:400; cursor: pointer;'"  @click="ActivateNewDataMode('generate series')">Generate Series</span>
                         <span class="mx-3" :style="activeNewDataMode.name=='paste from excel' ? 'font-weight:500;' : 'font-weight:400; cursor: pointer;'"  @click="ActivateNewDataMode('paste from excel')">Paste from Excel</span>
+                        <span class="mx-3" :style="activeNewDataMode.name=='flush large interval' ? 'font-weight:500;' : 'font-weight:400; cursor: pointer;'"  @click="ActivateNewDataMode('flush large interval')">Flush Large Interval</span>
                     </h5>
                     <hr />
                     <div v-if="activeNewDataMode.name=='single record'">
                         <div class="my-1">
                             <label style="width:120px;">New Timestamp</label>
                             <input type="string" @input="newDateTimeMoment=null" v-model="newDateTimeString"/>
-                            <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(false)">Parse as {{activeTimeZone.value}}</button>
-                            <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(true)">Parse as UTC</button>
+                            <button class="btn btn-sm btn-primary ms-2" @click="newDateTimeMoment = ValidateTimestamp(newDateTimeString, false)">Parse as {{activeTimeZone.value}}</button>
+                            <button class="btn btn-sm btn-primary ms-2" @click="newDateTimeMoment = ValidateTimestamp(newDateTimeString, true)">Parse as UTC</button>
                             ISO: {{newDateTimeMoment ? newDateTimeMoment.toISOString() : '---'}}
                         </div>
                         <div class="my-1" v-show="showStatus">
@@ -152,8 +153,8 @@ $user = Factory::getUser();
                         <div class="my-1">
                             <label style="width:120px;">Seed Timestamp</label>
                             <input type="string" @input="newDateTimeMoment=null" v-model="newDateTimeString"/>
-                            <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(false)">Parse as {{activeTimeZone.value}}</button>
-                            <button class="btn btn-sm btn-primary ms-2" @click="ValidateTimestamp(true)">Parse as UTC</button>
+                            <button class="btn btn-sm btn-primary ms-2" @click="newDateTimeMoment = ValidateTimestamp(newDateTimeString, false)">Parse as {{activeTimeZone.value}}</button>
+                            <button class="btn btn-sm btn-primary ms-2" @click="newDateTimeMoment = ValidateTimestamp(newDateTimeString, true)">Parse as UTC</button>
                             ISO: {{newDateTimeMoment ? newDateTimeMoment.toISOString() : '---'}}
                         </div>
                         <div class="my-1">
@@ -207,6 +208,32 @@ $user = Factory::getUser();
                     <div v-if="activeNewDataMode.name=='paste from excel'">
                         <span> paste from excel </span>
                         <hr />
+                    </div>
+                    <div v-if="activeNewDataMode.name=='flush large interval'">
+
+                        <div class="my-1">
+                            <label style="width:160px;">Start of Flush Interval</label>
+                            <input type="string" @input="flushStartTimeMoment=null" v-model="flushStartTimeString"/>
+                            <button class="btn btn-sm btn-primary ms-2" @click="flushStartTimeMoment = ValidateTimestamp(flushStartTimeString, false)">Parse as {{activeTimeZone.value}}</button>
+                            <button class="btn btn-sm btn-primary ms-2" @click="flushStartTimeMoment = ValidateTimestamp(flushStartTimeString, true)">Parse as UTC</button>
+                            ISO: {{flushStartTimeMoment ? flushStartTimeMoment.toISOString() : '---'}}
+                        </div>
+                        
+                        <div class="my-1">
+                            <label style="width:160px;">End of Flush Interval</label>
+                            <input type="string" @input="flushEndTimeMoment=null" v-model="flushEndTimeString"/>
+                            <button class="btn btn-sm btn-primary ms-2" @click="flushEndTimeMoment = ValidateTimestamp(flushEndTimeString, false)">Parse as {{activeTimeZone.value}}</button>
+                            <button class="btn btn-sm btn-primary ms-2" @click="flushEndTimeMoment = ValidateTimestamp(flushEndTimeString, true)">Parse as UTC</button>
+                            ISO: {{flushEndTimeMoment ? flushEndTimeMoment.toISOString() : '---'}}
+                        </div>
+
+                        <div class="my-1">
+                            <button :disabled="flushEndTimeMoment==null || flushStartTimeMoment == null" class="btn btn-sm btn-primary ms-4" @click="DeleteIntervalAsync">Flush Interval</button>
+                            <span v-if="mutationResponse">{{JSON.stringify(mutationResponse)}}</span>
+                        </div>
+
+                        <hr />
+
                     </div>
                 </div>
 
@@ -388,6 +415,11 @@ $user = Factory::getUser();
                 newDateTimeString: moment().format('YYYY-MM-DD HH:00:00'),
                 newDateTimeMoment: null,
                 
+                flushStartTimeString: moment().format('YYYY-MM-DD HH:00:00'),
+                flushStartTimeMoment: null,
+                flushEndTimeString: moment().format('YYYY-MM-DD HH:00:00'),
+                flushEndTimeMoment: null,
+
                 newSeries: [],
                 newSeriesCount: 3,
                 newSeriesInterval: 'PT8H',
@@ -405,6 +437,10 @@ $user = Factory::getUser();
                     },
                     {
                         name: "paste from excel",
+                        isActive: false
+                    },
+                    {
+                        name: "flush large interval",
                         isActive: false
                     },
 
@@ -542,6 +578,24 @@ $user = Factory::getUser();
                     this.mutationResponse = aResponse.data.replaceTimeSeriesRange;
                     await this.FetchAttributeAsync();
             },
+            DeleteIntervalAsync: async function(aVst){
+                    let query = `
+                        mutation m1 {
+                            replaceTimeSeriesRange(
+                                input: {
+                                    attributeOrTagId: "${this.activeAttribute.id}"
+                                    startTime: "${this.flushStartTimeMoment.toISOString()}"
+                                    endTime: "${this.flushEndTimeMoment.toISOString()}"
+                                }
+                            ){
+                                json
+                            }
+                        } 
+                    `;
+                    let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
+                    this.mutationResponse = aResponse.data.replaceTimeSeriesRange;
+                    await this.FetchAttributeAsync();
+            },
             InsertNewSeriesAsync: async function(){
 
                     let valueArray = this.newSeries.map(x=>`{
@@ -599,16 +653,18 @@ $user = Factory::getUser();
                         await this.FetchAttributeAsync();
                     }
             },
-            ValidateTimestamp: function(isUtc){
+            ValidateTimestamp: function(aDateTimeString, isUtc){
                 let aMoment = null;
                 if(isUtc){
-                    aMoment = moment.utc(this.newDateTimeString);
+                    aMoment = moment.utc(aDateTimeString);
                 } else {
-                    aMoment = moment(this.newDateTimeString).tz(this.activeTimeZone.value);
+                    aMoment = moment(aDateTimeString).tz(this.activeTimeZone.value);
                 }
                 if(aMoment.isValid()){
-                    this.newDateTimeMoment = aMoment;
-                } 
+                    return aMoment;
+                } else {
+                    return null;
+                }
             },
             CopyTimePeriod: function(){
                 clipboard.writeText(`{
