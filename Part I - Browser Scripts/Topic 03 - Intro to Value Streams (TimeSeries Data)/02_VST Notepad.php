@@ -57,19 +57,24 @@ $user = Factory::getUser();
                     @on-select="OnSelectAttributeAsync"
                 ></tree-picker>
             </span>
-            <span v-if="!activeAttribute">Pick attribute to get started</span>
+            <span>Pick Attribute</span>
             <br/>
             <div v-if="activeAttribute">
-                <div>
-                    Active Attribute: {{activeAttribute.displayName}} <button class="btn btn-sm btn-primary ms-2" @click="FetchAttributeAsync(activeAttribute.id)">Refresh</button><br />
+                <div class="my-4">
+                    Active Attribute: {{activeAttribute.displayName}}<br />
+                    Attribute ID: {{activeAttribute.id}} <i class="fa fa-circle-info ms-2" @click="clipboard.writeText(activeAttribute.id)"  data-toggle="tooltip" :title="`Click to copy id to clipboard: ${activeAttribute.id}`"></i>
+                    <br />
+                    FQN: {{activeAttribute.fqnPretty}} <i class="fa fa-circle-info ms-2" @click="clipboard.writeText(activeAttribute.fqn.join('.'))"  data-toggle="tooltip" :title="`Click to copy fqn to clipboard: ${activeAttribute.fqn.join('.')}`"></i>
+                    <br />
                     Data Type: {{activeAttribute.dataType}}<br />
                 </div>
-                <div v-if="activeAttribute.currentValue">
+                <div class="my-4" v-if="activeAttribute.currentValue">
                     <b>Current Value</b><br />
-                    Value: {{activeAttribute.currentValue.value}}<br />
-                    TS: {{activeAttribute.currentValue.timestamp}}<br />
+                    Current Value: {{activeAttribute.currentValue.value}}<br />
+                    <span v-if="activeAttribute.dataType=='ENUMERATION'">Enum Match: {{GetEnumMatch(activeAttribute.currentValue.value)}}<br /></span>
+                    ts (locale): {{moment(activeAttribute.currentValue.timestamp).tz(this.activeTimeZone.value).format('YYYY-MM-DD HH:mm:SS')}}<br />
                 </div>
-                <div v-if="activeAttribute.dataType=='ENUMERATION'">
+                <div class="my-4" v-if="activeAttribute.dataType=='ENUMERATION'">
                     <b>Enumeration</b><br />
                     Type: {{activeAttribute.enumerationType.displayName}}
                     <table class="table table-sm">
@@ -145,7 +150,6 @@ $user = Factory::getUser();
                         <div class="my-1">
                             <label style="width:120px;">Value</label><input type="string" v-model="newValue"/>
                             <button :disabled="newDateTimeMoment==null" class="btn btn-sm btn-primary ms-4" @click="InsertNewRecordAsync">Insert New Record</button>
-                            <span v-if="mutationResponse">{{JSON.stringify(mutationResponse)}}</span>
                         </div>
                         <hr />
                     </div>
@@ -174,7 +178,6 @@ $user = Factory::getUser();
                                 Generate Series
                             </button>
                             <i class="fa fa-circle-info ms-2" data-toggle="tooltip" :title="(newDateTimeMoment==null || newSeriesCount < 1 || moment.duration(newSeriesInterval).valueOf()==0) ? 'Validate the seed date first.' : 'Generate the series.'"></i>
-                            <span v-if="mutationResponse">{{JSON.stringify(mutationResponse)}}</span>
                         </div>
                         <table v-if="newSeries.length>0" class="table table-sm">
                             <thead>
@@ -229,11 +232,14 @@ $user = Factory::getUser();
 
                         <div class="my-1">
                             <button :disabled="flushEndTimeMoment==null || flushStartTimeMoment == null" class="btn btn-sm btn-primary ms-4" @click="DeleteIntervalAsync">Flush Interval</button>
-                            <span v-if="mutationResponse">{{JSON.stringify(mutationResponse)}}</span>
                         </div>
 
                         <hr />
 
+                    </div>
+                    <div v-if="mutationResponse">
+                        <label class="me-2">Last Response JSON:</label><span>{{JSON.stringify(mutationResponse)}}</span>
+                        <hr />
                     </div>
                 </div>
 
@@ -475,7 +481,7 @@ $user = Factory::getUser();
                         return "floatvalue";
                     case "INT":
                         return "intvalue";
-                    case "BOOLEAN":
+                    case "BOOL":
                         return "boolvalue";
                     case "STRING":
                         return "stringvalue";
@@ -714,6 +720,7 @@ $user = Factory::getUser();
                         attribute(id:"${aAttributeId}"){
                             id 
                             displayName 
+                            fqn
                             dataType 
                             dataSource 
                             enumerationValues
@@ -730,6 +737,16 @@ $user = Factory::getUser();
                 `;
                 let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
                 let aAttribute = aResponse.data.attribute;
+                
+                let fqnString = aAttribute.fqn.join('.');
+                aAttribute.fqnPretty = fqnString.length > 35 ? `...${fqnString.substring(fqnString.length - 35)}` : fqnString;
+                
+                if(aAttribute.currentValue!=null){
+                    if(aAttribute.currentValue.timestamp==null){
+                        aAttribute.currentValue=null;
+                    }
+                }
+                
                 console.log(aAttribute);
                 if(aAttribute.dataSource!="INTERNAL"){
                     alert('Selected attribute must be INTERNAL. No config, tags, or expression attributes are allowed.');
