@@ -241,7 +241,14 @@ $user = Factory::getUser();
                                     </span>
                                     <input v-else v-model="aVst.editValue" />
                                 </td>
-                                <td v-if="activeAttribute.dataType=='ENUMERATION'" scope="col">{{aVst.enumMatch}}</td>
+                                <td v-if="activeAttribute.dataType=='ENUMERATION'" scope="col">
+                                    <span v-if="!aVst.isEditMode">
+                                        {{aVst.enumMatch}}
+                                    </span>
+                                    <span v-else>
+                                        {{GetEnumMatch(aVst.editValue)}}
+                                    </span>
+                                </td>
                                 <td>
                                     <i class="fa fa-ellipsis-v" style="cursor: pointer;" id="dropdownMenu2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
                                     <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
@@ -429,6 +436,11 @@ $user = Factory::getUser();
             }
         },
         methods: {
+            GetEnumMatch: function(aValue){
+                let aIndex = this.activeAttribute.enumerationValues.findIndex(x=>x==aValue);
+                let enumMatch= aIndex == -1 ? '---' : this.activeAttribute.enumerationType.enumerationNames[aIndex];
+                return enumMatch;
+            },
             ToggleEditModeAsync: async function(aVst, doSave){
                 if(aVst.isEditMode){
                     // get out of edit mode, but possibly save
@@ -680,8 +692,9 @@ $user = Factory::getUser();
                         aVst.editValue = aVst[this.fieldToRetrieve];
                         aVst.editTimestamp = moment(aVst.ts).tz(this.activeTimeZone.value).format('YYYY-MM-DD HH:mm:SS');
                         if(this.activeAttribute.dataType=='ENUMERATION'){
-                            let aIndex = this.activeAttribute.enumerationValues.findIndex(x=>x==aVst[this.fieldToRetrieve]);
-                            aVst.enumMatch= aIndex == -1 ? '---' : this.activeAttribute.enumerationType.enumerationNames[aIndex];
+                            // let aIndex = this.activeAttribute.enumerationValues.findIndex(x=>x==aVst[this.fieldToRetrieve]);
+                            // aVst.enumMatch= aIndex == -1 ? '---' : this.activeAttribute.enumerationType.enumerationNames[aIndex];
+                            aVst.enumMatch = this.GetEnumMatch(aVst[this.fieldToRetrieve]);
                         }
                     });
 
