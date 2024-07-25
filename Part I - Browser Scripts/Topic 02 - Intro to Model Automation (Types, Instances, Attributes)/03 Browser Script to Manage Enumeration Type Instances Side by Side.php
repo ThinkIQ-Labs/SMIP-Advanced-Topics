@@ -129,7 +129,7 @@ $user = Factory::getUser();
 
         <div class="col-10">
             <div class="" style="overflow: auto; max-height:800px;">
-                <table v-if="activeEnumType" class="table table-sm">
+                <table v-if="activeEnumType" class="table table-sm table-hover">
                     <thead>
                         <tr style="position: sticky; top: 0; z-index: 100; background: white;">
                             <th scope="col" style="position: sticky; left: 0; z-index: 10; background: white;"> </th>
@@ -155,6 +155,34 @@ $user = Factory::getUser();
                             <td v-for="aAttribute in FilteredAttributes">
                                 <button class="btn btn-link btn-sm" data-toggle="tooltip" :title="`copy id: ${aAttribute.id}`" @click="clipboard.writeText(aAttribute.id)">id</button>
                                 <button class="btn btn-link btn-sm" data-toggle="tooltip" :title="`copy fqn: ${aAttribute.fqn}`" @click="clipboard.writeText(aAttribute.fqn)">fqn</button>
+                            </th>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;"></th>
+                            <td v-for="aAttribute in FilteredAttributes">
+                            </th>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">Data Source</th>
+                            <td v-for="aAttribute in FilteredAttributes">
+                                {{aAttribute.dataSource}}
+                            </th>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">Config Value</th>
+                            <td v-for="aAttribute in FilteredAttributes">
+                                {{aAttribute.enumerationValue==null ? '---' : `${aAttribute.enumerationValue} ("${GetEnumMatch(aAttribute.enumerationValue, aAttribute.enumerationValues)}"")`}}
+                            </th>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">Current Value</th>
+                            <td v-for="aAttribute in FilteredAttributes">
+                                {{aAttribute.currentValue==null ? '---' : `${aAttribute.currentValue.value} ("${GetEnumMatch(aAttribute.currentValue.value, aAttribute.enumerationValues)}"")`}}
+                            </th>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;"></th>
+                            <td v-for="aAttribute in FilteredAttributes">
                             </th>
                         </tr>
                         <tr v-for="(aEnumerationValue, i) in activeEnumType.defaultEnumerationValues">
@@ -239,6 +267,11 @@ $user = Factory::getUser();
 
         },
         methods: {
+            GetEnumMatch: function(aValue, aEnumerationValues){
+                let aIndex = aEnumerationValues.findIndex(x=>x==aValue);
+                let enumMatch= aIndex == -1 ? '---' : this.activeEnumType.enumerationNames[aIndex];
+                return enumMatch;
+            },
             LoadTiqEnumTypesAsync: async function(){
                 let query = `
 query q1 {
@@ -254,14 +287,24 @@ query q1 {
         attributes {
             id
             displayName
+            fqn
             dataSource
+            enumerationValue
             enumerationValues
+            currentValue{
+                timestamp
+                value
+            }
             onObject {
                 id
                 displayName
                 parentObject {
                     id
                     displayName
+                    parentObject {
+                        id
+                        displayName
+                    }
                 }
             }
         }
