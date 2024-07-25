@@ -1,4 +1,4 @@
-  <?php
+<?php
 
 // {
 //   "data": {
@@ -77,6 +77,20 @@ $user = Factory::getUser();
                 <div class="card-body" :style="`overflow-y: auto; max-height: ${expandAttributeNames?400:100}px;`">
                     <template v-for="aAttributeName in attributeNames">
                         <input type="checkbox" v-model="aAttributeName.checked"/>{{aAttributeName.name}}</br>
+                    </template>
+                </div>
+            </div>
+
+            <div v-if="activeEnumType" class="card my-2">
+                <div class="card-header">
+                    Data Source
+                    <button class="btn btn-link float-end mx-2" style="transform: translateY(-5px);" @click="()=>{attributeDataSources.forEach(x=>{x.checked=!x.checked;})}">
+                        flip checks
+                    </button>
+                </div>
+                <div class="card-body">
+                    <template v-for="aAttributeDataSource in attributeDataSources">
+                        <input type="checkbox" v-model="aAttributeDataSource.checked"/>{{aAttributeDataSource.name}}</br>
                     </template>
                 </div>
             </div>
@@ -183,6 +197,7 @@ $user = Factory::getUser();
                 activeEnumType: null,
                 attributeNames: [],
                 expandAttributeNames: false,
+                attributeDataSources: [],
                 instanceNames: [],
                 expandInstanceNames: false,
                 instanceParentNames: [],
@@ -200,6 +215,10 @@ $user = Factory::getUser();
                     let useAttribute = true;
 
                     if(! this.attributeNames.find(x=>x.name == aAttribute.displayName).checked){
+                        useAttribute = false;
+                    }
+
+                    if(! this.attributeDataSources.find(x=>x.name == aAttribute.dataSource).checked){
                         useAttribute = false;
                     }
 
@@ -256,6 +275,7 @@ query q1 {
             OnSelectEnumTypeAsync: function(aEnumType){
                 
                 let attributeNames = [];
+                let attributeDataSources = [];
                 let instanceNames = [];
                 let instanceParentNames = [];
 
@@ -264,6 +284,13 @@ query q1 {
                     if(attributeNames.filter(x=>x.name == aAttribute.displayName).length == 0){
                         attributeNames.push({
                             name: aAttribute.displayName,
+                            checked: true
+                        })
+                    }
+
+                    if(attributeDataSources.filter(x=>x.name == aAttribute.dataSource).length == 0){
+                        attributeDataSources.push({
+                            name: aAttribute.dataSource,
                             checked: true
                         })
                     }
@@ -292,6 +319,7 @@ query q1 {
                 this.activeEnumType = aEnumType;
 
                 this.attributeNames = attributeNames.sort((a,b) => a.name > b.name ? 1 : -1);
+                this.attributeDataSources = attributeDataSources.sort((a,b) => a.name > b.name ? 1 : -1);
                 this.instanceNames = instanceNames.sort((a,b) => a.name > b.name ? 1 : -1);
                 this.instanceParentNames = instanceParentNames.sort((a,b) => a.name > b.name ? 1 : -1);
                 
