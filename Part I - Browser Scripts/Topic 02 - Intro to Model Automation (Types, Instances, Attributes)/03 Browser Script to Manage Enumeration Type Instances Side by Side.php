@@ -44,7 +44,7 @@ $user = Factory::getUser();
         <div class="col-2">
             <div class="card" :style="`height: ${expandTiqEnumTypes ? 450 : activeEnumType ? 150 : 50 }px;`">
                 <div class="card-header">
-                    Type
+                    Enumeration Type
                     <i :class="`fa-light fa-2xl fa-caret-${expandTiqEnumTypes?'up':'down'} float-end`" style="transform: translateY(13px);" @click="()=>{expandTiqEnumTypes = !expandTiqEnumTypes;}"></i>
                 </div>
                 <div v-if="activeEnumType" class="card-body">
@@ -119,8 +119,23 @@ $user = Factory::getUser();
                     </button>
                 </div>
                 <div class="card-body" :style="`overflow-y: auto; max-height: ${expandInstanceParentNames?400:100}px;`">
-                    <template v-for="aAttributeParentName in instanceParentNames">
-                        <input type="checkbox" v-model="aAttributeParentName.checked"/>{{aAttributeParentName.name}}</br>
+                    <template v-for="aInstanceParentName in instanceParentNames">
+                        <input type="checkbox" v-model="aInstanceParentName.checked"/>{{aInstanceParentName.name}}</br>
+                    </template>
+                </div>
+            </div>
+
+            <div v-if="activeEnumType" class="card my-2">
+                <div class="card-header">
+                    InstanceGrandParent Names 
+                    <i :class="`fa-light fa-2xl fa-caret-${expandInstanceGrandParentNames?'up':'down'} float-end`" style="transform: translateY(13px); cursor: pointer;" @click="()=>{expandInstanceGrandParentNames = !expandInstanceGrandParentNames;}"></i>
+                    <button class="btn btn-link float-end" style="transform: translateY(-5px);" @click="()=>{instanceGrandParentNames.forEach(x=>{x.checked=!x.checked;})}">
+                        flip checks
+                    </button>
+                </div>
+                <div class="card-body" :style="`overflow-y: auto; max-height: ${expandInstanceGrandParentNames?400:100}px;`">
+                    <template v-for="aInstanceGrandParentName in instanceGrandParentNames">
+                        <input type="checkbox" v-model="aInstanceGrandParentName.checked"/>{{aInstanceGrandParentName.name}}</br>
                     </template>
                 </div>
             </div>
@@ -135,8 +150,8 @@ $user = Factory::getUser();
                             <th scope="col" style="position: sticky; left: 0; z-index: 10; background: white;"> </th>
                             <th scope="col" v-for="aAttribute in FilteredAttributes">
                                 {{aAttribute.displayName}}
-                                <a class="btn btn-link btn-sm" data-toggle="tooltip" :title="`Browse to ${aAttribute.displayName}`" :href="`./applications/model-explorer?tab=attribute_tab&attribute_id=${aAttribute.id}`" target="_blank">
-                                    <i style="transform: translateY(-3px);" class="fa fa-external-link"></i>
+                                <a class="btn btn-link btn-sm" data-toggle="tooltip" :title="`Browse to Attribute ${aAttribute.displayName}`" :href="`./applications/model-explorer?tab=attribute_tab&attribute_id=${aAttribute.id}`" target="_blank">
+                                    <i style="transform: translateY(-3px);" class="fa fa-light fa-external-link"></i>
                                 </a>
                             </th>
                         </tr>
@@ -144,11 +159,20 @@ $user = Factory::getUser();
                     <tbody>
                         <tr>
                             <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">Instance</th>
-                            <td v-for="aAttribute in FilteredAttributes">{{aAttribute.instanceName}}</th>
+                            <td v-for="aAttribute in FilteredAttributes">
+                                {{aAttribute.instanceName}}
+                                <a class="btn btn-link btn-sm" data-toggle="tooltip" :title="`Browse to Instance ${aAttribute.instanceName}`" :href="`./applications/model-explorer?tab=instance_tab&instance_id=${aAttribute.onObject.id}`" target="_blank">
+                                    <i style="transform: translateY(-3px);" class="fa fa-light fa-external-link"></i>
+                                </a>
+                            </th>
                         </tr>
                         <tr>
                             <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">InstanceParent</th>
                             <td v-for="aAttribute in FilteredAttributes">{{aAttribute.instanceParentName}}</th>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">InstanceGrandParent</th>
+                            <td v-for="aAttribute in FilteredAttributes">{{aAttribute.instanceGrandParentName}}</th>
                         </tr>
                         <tr>
                             <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;"></th>
@@ -178,6 +202,7 @@ $user = Factory::getUser();
                             <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">Current Value</th>
                             <td v-for="aAttribute in FilteredAttributes">
                                 {{aAttribute.currentValue==null ? '---' : `${aAttribute.currentValue.value} ("${GetEnumMatch(aAttribute.currentValue.value, aAttribute.enumerationValues)}"")`}}
+                                <i v-if="aAttribute.currentValue!=null" class="fa fa-light fa-clock" data-toggle="tooltip" :title="moment(aAttribute.currentValue.timestamp).toISOString()"></t>
                             </th>
                         </tr>
                         <tr>
@@ -214,6 +239,7 @@ $user = Factory::getUser();
         // el: "#app",
         data() {
             return {
+                moment: moment,
                 allowEditMode: false,
                 pageWidth: pageWidth,
                 clipboard: clipboard,
@@ -230,6 +256,8 @@ $user = Factory::getUser();
                 expandInstanceNames: false,
                 instanceParentNames: [],
                 expandInstanceParentNames: false,
+                instanceGrandParentNames: [],
+                expandInstanceGrandParentNames: false,
             }
         },
         mounted: async function () {
@@ -255,6 +283,10 @@ $user = Factory::getUser();
                     }
 
                     if(! this.instanceParentNames.find(x=>x.name == aAttribute.instanceParentName).checked){
+                        useAttribute = false;
+                    }
+
+                    if(! this.instanceGrandParentNames.find(x=>x.name == aAttribute.instanceGrandParentName).checked){
                         useAttribute = false;
                     }
 
@@ -321,6 +353,7 @@ query q1 {
                 let attributeDataSources = [];
                 let instanceNames = [];
                 let instanceParentNames = [];
+                let instanceGrandParentNames = [];
 
                 aEnumType.attributes.forEach(aAttribute => {
                     
@@ -338,7 +371,7 @@ query q1 {
                         })
                     }
 
-                    let instanceName = aAttribute.onObject == null ? 'n/a' : aAttribute.onObject.displayName;
+                    let instanceName = aAttribute.onObject.displayName;
                     aAttribute.instanceName = instanceName;
                     if(instanceNames.filter(x=>x.name == instanceName).length == 0){
                         instanceNames.push({
@@ -347,11 +380,20 @@ query q1 {
                         })
                     }
 
-                    let instanceParentName = aAttribute.onObject == null ? 'n/a' : aAttribute.onObject.parentObject == null ? 'n/a' : aAttribute.onObject.parentObject.displayName;
+                    let instanceParentName = aAttribute.onObject.parentObject == null ? 'n/a' : aAttribute.onObject.parentObject.displayName;
                     aAttribute.instanceParentName = instanceParentName;
                     if(instanceParentNames.filter(x=>x.name == instanceParentName).length == 0){
                         instanceParentNames.push({
                             name: instanceParentName,
+                            checked: true
+                        })
+                    }
+
+                    let instanceGrandParentName = aAttribute.onObject.parentObject == null ? 'n/a' : aAttribute.onObject.parentObject.parentObject == null ? 'n/a' : aAttribute.onObject.parentObject.parentObject.displayName;;
+                    aAttribute.instanceGrandParentName = instanceGrandParentName;
+                    if(instanceGrandParentNames.filter(x=>x.name == instanceGrandParentName).length == 0){
+                        instanceGrandParentNames.push({
+                            name: instanceGrandParentName,
                             checked: true
                         })
                     }
@@ -365,6 +407,7 @@ query q1 {
                 this.attributeDataSources = attributeDataSources.sort((a,b) => a.name > b.name ? 1 : -1);
                 this.instanceNames = instanceNames.sort((a,b) => a.name > b.name ? 1 : -1);
                 this.instanceParentNames = instanceParentNames.sort((a,b) => a.name > b.name ? 1 : -1);
+                this.instanceGrandParentNames = instanceGrandParentNames.sort((a,b) => a.name > b.name ? 1 : -1);
                 
                 this.expandTiqEnumTypes = false;
             }
