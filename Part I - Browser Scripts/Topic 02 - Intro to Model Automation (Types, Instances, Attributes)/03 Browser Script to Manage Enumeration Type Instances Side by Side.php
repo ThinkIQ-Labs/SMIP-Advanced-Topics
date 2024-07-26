@@ -112,7 +112,7 @@ $user = Factory::getUser();
 
             <div v-if="activeEnumType" class="card my-2">
                 <div class="card-header">
-                    InstanceParent Names 
+                    Parent Names 
                     <i :class="`fa-light fa-2xl fa-caret-${expandInstanceParentNames?'up':'down'} float-end`" style="transform: translateY(13px); cursor: pointer;" @click="()=>{expandInstanceParentNames = !expandInstanceParentNames;}"></i>
                     <button class="btn btn-link float-end" style="transform: translateY(-5px);" @click="()=>{instanceParentNames.forEach(x=>{x.checked=!x.checked;})}">
                         flip checks
@@ -127,7 +127,7 @@ $user = Factory::getUser();
 
             <div v-if="activeEnumType" class="card my-2">
                 <div class="card-header">
-                    InstanceGrandParent Names 
+                    GrandParent Names 
                     <i :class="`fa-light fa-2xl fa-caret-${expandInstanceGrandParentNames?'up':'down'} float-end`" style="transform: translateY(13px); cursor: pointer;" @click="()=>{expandInstanceGrandParentNames = !expandInstanceGrandParentNames;}"></i>
                     <button class="btn btn-link float-end" style="transform: translateY(-5px);" @click="()=>{instanceGrandParentNames.forEach(x=>{x.checked=!x.checked;})}">
                         flip checks
