@@ -202,14 +202,44 @@ $user = Factory::getUser();
                                     </td>
                                 </tr>
                         </table>
-                        <button :disabled="newSeries.length == 0"class="btn btn-sm btn-primary m-2" @click="InsertNewSeriesAsync">
+                        <button :disabled="newSeries.length == 0"class="btn btn-sm btn-primary m-2" @click="InsertNewSeriesAsync(newSeries)">
                             Write Series to Attribute
                         </button>
                         <i class="fa fa-circle-info ms-2" data-toggle="tooltip" :title="newSeries.length == 0 ? 'Generate a series first.' : 'Save data to attribute.'"></i>
                         <hr />
                     </div>
                     <div v-if="activeNewDataMode.name=='paste from excel'">
-                        <span> paste from excel </span>
+
+
+                        <button class="btn btn-sm btn-primary" @click="PasteSeries">Paste Data from Excel</button>
+
+                        <table v-if="xlsSeries.length>0" class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">ts (ISO)</th>
+                                    <th scope="col">ts (locale)</th>
+                                    <th scope="col" v-show="showStatus">Status</th>
+                                    <th scope="col">Value</th>
+                                    <th v-if="activeAttribute.dataType=='ENUMERATION'" scope="col">Enum Match</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(aVst,i) in xlsSeries">
+                                    <th scope="row">{{i+1}}</th>
+                                    <td>{{moment(aVst.timestamp).tz(activeTimeZone.value).toISOString()}}</td>
+                                    <td><input v-model="aVst.timestamp" /></td>
+                                    <td v-show="showStatus">{{aVst.status}}</td>
+                                    <td><input v-model="aVst.value" /></td>
+                                    <td v-if="activeAttribute.dataType=='ENUMERATION'" scope="col">
+                                        {{GetEnumMatch(aVst.value)}}
+                                    </td>
+                                </tr>
+                        </table>
+                        <button :disabled="xlsSeries.length == 0"class="btn btn-sm btn-primary m-2" @click="InsertNewSeriesAsync(xlsSeries)">
+                            Write Series to Attribute
+                        </button>
+                        <i class="fa fa-circle-info ms-2" data-toggle="tooltip" :title="xlsSeries.length == 0 ? 'Paste a series from Excel first.' : 'Save data to attribute.'"></i>
                         <hr />
                     </div>
                     <div v-if="activeNewDataMode.name=='flush large interval'">
@@ -430,6 +460,8 @@ $user = Factory::getUser();
                 newSeriesCount: 3,
                 newSeriesInterval: 'PT8H',
 
+                xlsSeries: [],
+
                 mutationResponse: null,
 
                 newDataModes: [
@@ -560,6 +592,28 @@ $user = Factory::getUser();
                 }
                 this.newSeries = newSeries;
             },
+            PasteSeries: async function(){
+                this.xlsSeries = [];
+                
+                let data = await clipboard.readText();
+                // read data
+                let rows = data.split('\r\n');
+
+                let xlsSeries = [];
+                for(let i=0; i<rows.length; i++){
+                    let row = rows[i];
+                    if(row!=''){
+                        let fields = row.split('\t');
+                        xlsSeries.push({
+                            value: fields[1],
+                            status: 0,
+                            timestamp: moment(fields[0]).tz(this.activeTimeZone.value).format('YYYY-MM-DD HH:mm:SS')
+                        });
+                    }
+                }
+
+                this.xlsSeries = xlsSeries;
+            },
             ActivateNewDataMode: async function(aModeName){
                 if(this.activeNewDataMode.name!=aModeName){
                     this.newDataModes.forEach(x=>x.isActive=false);
@@ -602,9 +656,9 @@ $user = Factory::getUser();
                     this.mutationResponse = aResponse.data.replaceTimeSeriesRange;
                     await this.FetchAttributeAsync();
             },
-            InsertNewSeriesAsync: async function(){
+            InsertNewSeriesAsync: async function(aSeries){
 
-                    let valueArray = this.newSeries.map(x=>`{
+                    let valueArray = aSeries.map(x=>`{
                         value:"${x.value}",
                         status: "0",
                         timestamp:"${moment(x.timestamp).tz(this.activeTimeZone.value).toISOString()}"
