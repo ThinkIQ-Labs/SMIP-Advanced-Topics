@@ -16,7 +16,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 
 HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.core.js',            array('version' => 'auto', 'relative' => false));
 // HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.tiqGraphQL.js',      array('version' => 'auto', 'relative' => false));
-HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.components.min.js',  array('version' => 'auto', 'relative' => false));
+//HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.components.min.js',  array('version' => 'auto', 'relative' => false));
 // HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.charts.min.js',      array('version' => 'auto', 'relative' => false));
 
 require_once 'thinkiq_context.php';
@@ -102,6 +102,21 @@ $user = Factory::getUser();
 
             <div v-if="activeType" class="card my-2">
                 <div class="card-header">
+                    FQN Contains Filter
+                    <i :class="`fa-light fa-2xl fa-caret-${expandFnqFilter?'up':'down'} float-end`" style="transform: translateY(13px);" @click="()=>{expandFnqFilter = !expandFnqFilter;}"></i>
+                </div>
+                <div v-if="expandFnqFilter" class="card-body">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <input type="checkbox" v-model="useFqnFilter"/>
+                        </div>
+                        <input type="text" v-model="fqnFilterText" class="form-control" />
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="activeType" class="card my-2">
+                <div class="card-header">
                     Parent Names
                     <i :class="`fa-light fa-2xl fa-caret-${expandParentNames?'up':'down'} float-end`" style="transform: translateY(13px); cursor: pointer;" @click="()=>{expandParentNames = !expandParentNames;}"></i>
                     <button class="btn btn-link float-end" style="transform: translateY(-5px);" @click="()=>{parentNames.forEach(x=>{x.checked=!x.checked;})}">
@@ -177,10 +192,10 @@ $user = Factory::getUser();
                             <td v-for="aInstance in FilteredInstances">{{aInstance.grandParentName}}</th>
                         </tr>
                         <tr>
-                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;"></th>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">id,fqn</th>
                             <td v-for="aInstance in FilteredInstances">
                                 <button class="btn btn-link btn-sm" data-toggle="tooltip" :title="`copy id: ${aInstance.id}`" @click="clipboard.writeText(aInstance.id)">id</button>
-                                <button class="btn btn-link btn-sm" data-toggle="tooltip" :title="`copy fqn: ${aInstance.fqn}`" @click="clipboard.writeText(aInstance.fqn)">fqn</button>
+                                <button class="btn btn-link btn-sm" data-toggle="tooltip" :title="`copy fqn: ${aInstance.fqn.join('.')}`" @click="clipboard.writeText(aInstance.fqn.join('.'))">fqn</button>
                             </th>
                         </tr>
                         <tr v-for="(aTypeToAttributeType,r) in typeToAttributeTypes.filter(x=>x.checked)" :set="tempAttributes[r] = []">
@@ -254,6 +269,9 @@ $user = Factory::getUser();
                 activeType: null,
                 instanceNames: [],
                 expandInstanceNames: false,
+                expandFnqFilter: false,
+                fqnFilterText: "",
+                useFqnFilter: false,
                 parentNames: [],
                 expandParentNames: false,
                 grandParentNames: [],
@@ -275,6 +293,12 @@ $user = Factory::getUser();
 
                     if(! this.instanceNames.find(x=>x.name == aInstance.displayName).checked){
                         useInstance = false;
+                    }
+
+                    if(this.useFqnFilter){
+                        if(!aInstance.fqn.join(".").includes(this.fqnFilterText)){
+                            useInstance = false;
+                        }
                     }
 
                     if(! this.parentNames.find(x=>x.name == aInstance.parentName).checked){
