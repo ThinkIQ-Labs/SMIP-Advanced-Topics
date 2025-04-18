@@ -34,6 +34,7 @@ $user = Factory::getUser();
             <h1 class="pb-2 pt-2" style="font-size:2.5rem; color:#126181;">
                 {{pageTitle}}
                 <a v-if="true" class="float-end btn btn-sm btn-link mt-2" style="font-size:1rem; color:#126181;" v-bind:href="`/index.php?option=com_modeleditor&view=script&id=${context.std_inputs.script_id}`" target="_blank">source</a>
+                <button v-if="activeType!=null" class="btn btn-light mx-2 float-end" @click="async ()=>{allowEditMode=!allowEditMode; await OnSelectTypeAsync(activeType);}">{{allowEditMode ? "Edit Mode is On" : "Edit Mode is Off"}}</button>
             </h1>
             <hr style="border-color:#126181; border-width:medium;" />
         </div>   
@@ -174,11 +175,39 @@ $user = Factory::getUser();
                     <thead>
                         <tr style="position: sticky; top: 0; z-index: 100; background: white;">
                             <th scope="col" style="position: sticky; left: 0; z-index: 10; background: white;"> </th>
-                            <th scope="col" v-for="aInstance in FilteredInstances">
-                                {{aInstance.displayName}}
+                            <th scope="col" v-for="aInstance in FilteredInstances" @dblclick="()=>{aInstance.isEditMode=!aInstance.isEditMode;}">
+                                <label v-if="! aInstance.displayNameIsEditMode" 
+                                    @mouseover="aInstance.displayNameShowEdit = aInstance.allowEdit ? true : false" 
+                                    @mouseout="aInstance.displayNameShowEdit = false" 
+                                    :style="`border-width:${aInstance.displayNameShowEdit ? 'thin' : ''}; border-style:${aInstance.displayNameShowEdit ? 'dashed' : ''} ; width: calc(100% - 30px);`"
+                                >
+                                    <span>
+                                        {{aInstance.displayName}}
+                                    </span>
+                                    <i v-show="aInstance.displayNameShowEdit" 
+                                        class="fa fa-sm fa-pencil float-end" 
+                                        style="transform: translateY(9px) translateX(-3px); cursor:pointer;"
+                                        @click="aInstance.displayNameIsEditMode = true"
+                                    ></i>
+                                </label>
+                                <label v-if="aInstance.displayNameIsEditMode"  
+                                    style="border-width: 'thin'; border-style: 'dashed'; width: calc(100% - 30px);"
+                                >
+                                    <input style="text" v-model="aInstance.displayNameEditValue"/>
+                                    <i class="fa fa-sm fa-cancel float-end" 
+                                        style="transform: translateY(9px) translateX(-3px); cursor:pointer;"
+                                        @click="aInstance.displayNameIsEditMode=false"
+                                    ></i>
+                                    <i class="fa fa-sm fa-save float-end" 
+                                        style="transform: translateY(9px) translateX(-3px); cursor:pointer;"
+                                        @click="UpdateDisplayNameAsync(aInstance)"
+                                    ></i>
+                                </label>
                                 <a class="btn btn-link btn-sm" data-toggle="tooltip" :title="`Browse to ${aInstance.displayName}`" :href="`./applications/model-explorer?tab=instance_tab&instance_id=${aInstance.id}`" target="_blank">
                                     <i style="transform: translateY(-3px);" class="fa fa-external-link"></i>
                                 </a>
+
+
                             </th>
                         </tr>
                     </thead>
@@ -324,6 +353,41 @@ $user = Factory::getUser();
             }
         },
         methods: {
+            UpdateDisplayNameAsync: async function(aInstance){
+                
+                if(this.instanceNames.filter(x=>x.name == aInstance.displayNameEditValue).length == 0){
+                    this.instanceNames.push({
+                        name: aInstance.displayNameEditValue,
+                        checked: true
+                    })
+                }
+
+                
+                let query = `
+                    mutation m1 {
+                        updateObject(
+                        input: { id: "${aInstance.id}", patch: { displayName: "${aInstance.displayNameEditValue}" } }
+                        ) {
+                            clientMutationId
+                            object {
+                                displayName
+                            }
+                        }
+                    }                
+                `;
+
+                console.log(query);
+
+                let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
+                aInstance.displayName = aResponse.data.updateObject.object.displayName;
+                aInstance.displayNameEditValue = aResponse.data.updateObject.object.displayName;
+                console.log(aResponse);
+
+
+                aInstance.displayNameShowEdit = false;
+                aInstance.displayNameIsEditMode = false;
+
+            },
             UpdateAttributeAsync: async function(aAttribute){
 
                 let aFieldName = null;
@@ -504,6 +568,11 @@ query q1 {
                 let typeToAttributeTypes = [];
                 tiqType.objectsByTypeId.forEach(aInstance => {
                     
+                    aInstance.displayNameShowEdit = false;
+                    aInstance.displayNameIsEditMode = false;
+                    aInstance.displayNameEditValue = aInstance.displayName;
+                    aInstance.allowEdit = this.allowEditMode ? true : false;
+
                     if(instanceNames.filter(x=>x.name == aInstance.displayName).length == 0){
                         instanceNames.push({
                             name: aInstance.displayName,
