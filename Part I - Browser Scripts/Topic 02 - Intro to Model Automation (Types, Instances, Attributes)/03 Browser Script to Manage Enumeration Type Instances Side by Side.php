@@ -3,9 +3,9 @@
 // {
 //   "data": {
 //     "script": {
-//       "displayName": "Instance Dashboard",
-//       "relativeName": "instance_dashboard",
-//       "description": "To compare instances of types side by side.",
+//       "displayName": "Enumeration Dashboard",
+//       "relativeName": "enumeration_dashboard",
+//       "description": null,
 //       "outputType": "BROWSER",
 //       "scriptType": "PHP"
 //     }
@@ -16,7 +16,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 
 HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.core.js',            array('version' => 'auto', 'relative' => false));
 // HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.tiqGraphQL.js',      array('version' => 'auto', 'relative' => false));
-//HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.components.min.js',  array('version' => 'auto', 'relative' => false));
+HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.components.min.js',  array('version' => 'auto', 'relative' => false));
 // HTMLHelper::_('script', 'media/com_thinkiq/js/dist/tiq.charts.min.js',      array('version' => 'auto', 'relative' => false));
 
 require_once 'thinkiq_context.php';
@@ -34,7 +34,6 @@ $user = Factory::getUser();
             <h1 class="pb-2 pt-2" style="font-size:2.5rem; color:#126181;">
                 {{pageTitle}}
                 <a v-if="true" class="float-end btn btn-sm btn-link mt-2" style="font-size:1rem; color:#126181;" v-bind:href="`/index.php?option=com_modeleditor&view=script&id=${context.std_inputs.script_id}`" target="_blank">source</a>
-                <button v-if="activeType!=null" class="btn btn-light mx-2 float-end" @click="async ()=>{allowEditMode=!allowEditMode; await OnSelectTypeAsync(activeType);}">{{allowEditMode ? "Edit Mode is On" : "Edit Mode is Off"}}</button>
             </h1>
             <hr style="border-color:#126181; border-width:medium;" />
         </div>   
@@ -43,126 +42,100 @@ $user = Factory::getUser();
     <div class="row" :style="`max-width:${pageWidth * 0.98}px;`">
 
         <div class="col-2">
-            <div class="card" :style="`height: ${expandTiqTypes?600:activeType?150:50}px;`">
+            <div class="card" :style="`height: ${expandTiqEnumTypes ? 450 : activeEnumType ? 150 : 50 }px;`">
                 <div class="card-header">
-                    Type
-                    <i :class="`fa-light fa-2xl fa-caret-${expandTiqTypes?'up':'down'} float-end`" style="transform: translateY(13px);" @click="()=>{expandTiqTypes = !expandTiqTypes;}"></i>
+                    Enumeration Type
+                    <i :class="`fa-light fa-2xl fa-caret-${expandTiqEnumTypes?'up':'down'} float-end`" style="transform: translateY(13px);" @click="()=>{expandTiqEnumTypes = !expandTiqEnumTypes;}"></i>
                 </div>
-                <div v-if="activeType" class="card-body">
-                    Name: <span v-if="activeType">{{activeType.displayName}}</span></br>
-                    Inherits from: <span v-if="activeType">{{activeType.subTypeOf==null ? 'n/a' : activeType.subTypeOf.displayName}}</span></br>
-                    Library: <span v-if="activeType">{{activeType.partOf.displayName}}</span></br>
-                    Instances: <span v-if="activeType">{{FilteredInstances.length}} of {{activeType.objectsByTypeId.length}}</span></br>
+                <div v-if="activeEnumType" class="card-body">
+                    Name: <span v-if="activeEnumType">{{activeEnumType.displayName}}</span></br>
+                    Library: <span v-if="activeEnumType">{{activeEnumType.partOf.displayName}}</span></br>
+                    Attributes: <span v-if="activeEnumType"> {{FilteredAttributes.length}} of {{activeEnumType.attributes.length}}</span></br>
                 </div>
-                <div v-if="expandTiqTypes" class="card-body">
-                    <span class="float-start mt-2">
-                        Pick from Type Tree
-                    </span>
-                    <span class="float-end me-2">
-                        <tree-picker
-                            :picker-name='type_picker'
-                            display-mode='type'
-                            :height='500'
-                            content='Pick Type to Explore.'
-                            default-expand-levels='0'
-                            :default-root-node-fqn='null'
-                            :default-root-node-id='null'
-                            :prune-branches='false'
-                            :branch-types='["organization","place,equipment","gateway","connector","opcua_object","object","material","person","attribute"]'
-                            :leaf-types='["attribute","tag"]'
-                            @on-select="OnSelectTypeAsync"
-                        ></tree-picker>
-                    </span><br />
+                <div v-if="expandTiqEnumTypes" class="card-body">
                     <hr />
                     Pick from Usage Board</br>
-                    <div class="mt-2" :style="`overflow-y: auto; max-height: ${activeType ? 350 : 450}px;`">
-                        <template v-for="aTiqType in tiqTypes.filter(x=>x.objectsByTypeId.length > 0)">
-                            <button class="btn btn-sm btn-light" style="width:95%;" @click="OnSelectTypeAsync({id: aTiqType.id})">
-                                <label class="float-start" data-toggle="tooltip" :title="`Library: ${aTiqType.partOf==null ? '-' : aTiqType.partOf.displayName}`">{{aTiqType.displayName}}</label>
-                                <label class="float-end">(x{{aTiqType.objectsByTypeId.length}})</label>
+                    <div class="mt-2" :style="`overflow-y: auto; max-height: ${activeEnumType ? 200 : 300}px;`">
+                        <template v-for="aEnumTiqType in tiqEnumTypes.filter(x=>x.attributes.length > 0)">
+                            <button class="btn btn-sm btn-light" style="width:95%;" @click="OnSelectEnumTypeAsync(aEnumTiqType)">
+                                <label class="float-start" data-toggle="tooltip" :title="`Library: ${aEnumTiqType.partOf==null ? '-' : aEnumTiqType.partOf.displayName}`">{{aEnumTiqType.displayName}}</label>
+                                <label class="float-end">(x{{aEnumTiqType.attributes.length}})</label>
                             </button></br>
                         </template>
                     </div>
                 </div>
             </div>
 
-            <div v-if="activeType" class="card my-2">
+            <div v-if="activeEnumType" class="card my-2">
+                <div class="card-header">
+                    Attribute Names
+                    <i :class="`fa-light fa-2xl fa-caret-${expandAttributeNames?'up':'down'} float-end`" style="transform: translateY(13px);" @click="()=>{expandAttributeNames = !expandAttributeNames;}"></i>
+                    <button class="btn btn-link float-end mx-2" style="transform: translateY(-5px);" @click="()=>{attributeNames.forEach(x=>{x.checked=!x.checked;})}">
+                        flip checks
+                    </button>
+                </div>
+                <div class="card-body" :style="`overflow-y: auto; max-height: ${expandAttributeNames?400:100}px;`">
+                    <template v-for="aAttributeName in attributeNames">
+                        <input type="checkbox" v-model="aAttributeName.checked"/>{{aAttributeName.name}}</br>
+                    </template>
+                </div>
+            </div>
+
+            <div v-if="activeEnumType" class="card my-2">
+                <div class="card-header">
+                    Data Source
+                    <button class="btn btn-link float-end mx-2" style="transform: translateY(-5px);" @click="()=>{attributeDataSources.forEach(x=>{x.checked=!x.checked;})}">
+                        flip checks
+                    </button>
+                </div>
+                <div class="card-body">
+                    <template v-for="aAttributeDataSource in attributeDataSources">
+                        <input type="checkbox" v-model="aAttributeDataSource.checked"/>{{aAttributeDataSource.name}}</br>
+                    </template>
+                </div>
+            </div>
+
+            <div v-if="activeEnumType" class="card my-2">
                 <div class="card-header">
                     Instance Names
-                    <i :class="`fa-light fa-2xl fa-caret-${expandInstanceNames?'up':'down'} float-end`" style="transform: translateY(13px);" @click="()=>{expandInstanceNames = !expandInstanceNames;}"></i>
-                    <button class="btn btn-link float-end mx-2" style="transform: translateY(-5px);" @click="()=>{instanceNames.forEach(x=>{x.checked=!x.checked;})}">
+                    <i :class="`fa-light fa-2xl fa-caret-${expandInstanceNames?'up':'down'} float-end`" style="transform: translateY(13px); cursor: pointer;" @click="()=>{expandInstanceNames = !expandInstanceNames;}"></i>
+                    <button class="btn btn-link float-end" style="transform: translateY(-5px);" @click="()=>{instanceNames.forEach(x=>{x.checked=!x.checked;})}">
                         flip checks
                     </button>
                 </div>
                 <div class="card-body" :style="`overflow-y: auto; max-height: ${expandInstanceNames?400:100}px;`">
-                    <template v-for="aInstanceName in instanceNames">
-                        <input type="checkbox" v-model="aInstanceName.checked"/>{{aInstanceName.name}}</br>
+                    <template v-for="aAttributeName in instanceNames">
+                        <input type="checkbox" v-model="aAttributeName.checked"/>{{aAttributeName.name}}</br>
                     </template>
                 </div>
             </div>
 
-            <div v-if="activeType" class="card my-2">
+            <div v-if="activeEnumType" class="card my-2">
                 <div class="card-header">
-                    FQN Contains Filter
-                    <i :class="`fa-light fa-2xl fa-caret-${expandFnqFilter?'up':'down'} float-end`" style="transform: translateY(13px);" @click="()=>{expandFnqFilter = !expandFnqFilter;}"></i>
-                </div>
-                <div v-if="expandFnqFilter" class="card-body">
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <input type="checkbox" v-model="useFqnFilter"/>
-                        </div>
-                        <input type="text" v-model="fqnFilterText" class="form-control" />
-                    </div>
-                </div>
-            </div>
-
-            <div v-if="activeType" class="card my-2">
-                <div class="card-header">
-                    Parent Names
-                    <i :class="`fa-light fa-2xl fa-caret-${expandParentNames?'up':'down'} float-end`" style="transform: translateY(13px); cursor: pointer;" @click="()=>{expandParentNames = !expandParentNames;}"></i>
-                    <button class="btn btn-link float-end" style="transform: translateY(-5px);" @click="()=>{parentNames.forEach(x=>{x.checked=!x.checked;})}">
+                    Parent Names 
+                    <i :class="`fa-light fa-2xl fa-caret-${expandInstanceParentNames?'up':'down'} float-end`" style="transform: translateY(13px); cursor: pointer;" @click="()=>{expandInstanceParentNames = !expandInstanceParentNames;}"></i>
+                    <button class="btn btn-link float-end" style="transform: translateY(-5px);" @click="()=>{instanceParentNames.forEach(x=>{x.checked=!x.checked;})}">
                         flip checks
                     </button>
                 </div>
-                <div class="card-body" :style="`overflow-y: auto; max-height: ${expandParentNames?400:100}px;`">
-                    <template v-for="aParentName in parentNames">
-                        <input type="checkbox" v-model="aParentName.checked"/>{{aParentName.name}}</br>
+                <div class="card-body" :style="`overflow-y: auto; max-height: ${expandInstanceParentNames?400:100}px;`">
+                    <template v-for="aInstanceParentName in instanceParentNames">
+                        <input type="checkbox" v-model="aInstanceParentName.checked"/>{{aInstanceParentName.name}}</br>
                     </template>
                 </div>
             </div>
 
-            <div v-if="activeType" class="card my-2">
+            <div v-if="activeEnumType" class="card my-2">
                 <div class="card-header">
-                    Grandparent Names 
-                    <i :class="`fa-light fa-2xl fa-caret-${expandGrandParentNames?'up':'down'} float-end`" style="transform: translateY(13px); cursor: pointer;" @click="()=>{expandGrandParentNames = !expandGrandParentNames;}"></i>
-                    <button class="btn btn-link float-end" style="transform: translateY(-5px);" @click="()=>{grandParentNames.forEach(x=>{x.checked=!x.checked;})}">
+                    GrandParent Names 
+                    <i :class="`fa-light fa-2xl fa-caret-${expandInstanceGrandParentNames?'up':'down'} float-end`" style="transform: translateY(13px); cursor: pointer;" @click="()=>{expandInstanceGrandParentNames = !expandInstanceGrandParentNames;}"></i>
+                    <button class="btn btn-link float-end" style="transform: translateY(-5px);" @click="()=>{instanceGrandParentNames.forEach(x=>{x.checked=!x.checked;})}">
                         flip checks
                     </button>
                 </div>
-                <div class="card-body" :style="`overflow-y: auto; max-height: ${expandGrandParentNames?400:100}px;`">
-                    <template v-for="aGrandParentName in grandParentNames">
-                        <input type="checkbox" v-model="aGrandParentName.checked"/>{{aGrandParentName.name}}</br>
-                    </template>
-                </div>
-            </div>
-
-            <div v-if="activeType" class="card my-2">
-                <div class="card-header">
-                    Attributes
-                    <i :class="`fa-light fa-2xl fa-caret-${expandTypeToAttributeTypes?'up':'down'} float-end`" style="transform: translateY(13px); cursor: pointer;" @click="()=>{expandTypeToAttributeTypes = !expandTypeToAttributeTypes;}"></i>
-                    <button class="btn btn-link float-end" style="transform: translateY(-5px);" @click="()=>{typeToAttributeTypes.forEach(x=>{x.checked=!x.checked;})}">
-                        flip checks
-                    </button>
-                    <button class="btn btn-light float-end" style="transform: translateY(-5px);" @click="()=>{typeToAttributeTypesByImportance = !typeToAttributeTypesByImportance;}">
-                        <i class="fa fa-arrow-up-a-z" :style="`background-color: ${typeToAttributeTypesByImportance ? '' : 'lightgray'};`"></i> vs <i class="fa fa-arrow-up-wide-short" :style="`background-color: ${typeToAttributeTypesByImportance ? 'lightgray' : ''};`"></i>
-                    </button>
-                </div>
-                <div class="card-body" :style="`overflow-y: auto; max-height: ${expandTypeToAttributeTypes?400:100}px;`">
-                    <template v-for="aTypeToAttributeType in SortedTypeToAttributeTypesByImportance">
-                        <input type="checkbox" v-model="aTypeToAttributeType.checked"/>
-                        <span :style="`${aTypeToAttributeType.sourceCategory=='DYNAMIC' ? 'color:red;' : ''}`">{{aTypeToAttributeType.name}}</span> 
-                        <label :style="`${aTypeToAttributeType.sourceCategory=='DYNAMIC' ? 'color:red;' : ''}`" class="float-end"><{{aTypeToAttributeType.dataType}}></label>
-                        </br>
+                <div class="card-body" :style="`overflow-y: auto; max-height: ${expandInstanceGrandParentNames?400:100}px;`">
+                    <template v-for="aInstanceGrandParentName in instanceGrandParentNames">
+                        <input type="checkbox" v-model="aInstanceGrandParentName.checked"/>{{aInstanceGrandParentName.name}}</br>
                     </template>
                 </div>
             </div>
@@ -171,103 +144,82 @@ $user = Factory::getUser();
 
         <div class="col-10">
             <div class="" style="overflow: auto; max-height:800px;">
-                <table v-if="activeType" class="table table-sm">
+                <table v-if="activeEnumType" class="table table-sm table-hover">
                     <thead>
                         <tr style="position: sticky; top: 0; z-index: 100; background: white;">
                             <th scope="col" style="position: sticky; left: 0; z-index: 10; background: white;"> </th>
-                            <th scope="col" v-for="aInstance in FilteredInstances" @dblclick="()=>{aInstance.isEditMode=!aInstance.isEditMode;}">
-                                <label v-if="! aInstance.displayNameIsEditMode" 
-                                    @mouseover="aInstance.displayNameShowEdit = aInstance.allowEdit ? true : false" 
-                                    @mouseout="aInstance.displayNameShowEdit = false" 
-                                    :style="`border-width:${aInstance.displayNameShowEdit ? 'thin' : ''}; border-style:${aInstance.displayNameShowEdit ? 'dashed' : ''} ; width: calc(100% - 30px);`"
-                                >
-                                    <span>
-                                        {{aInstance.displayName}}
-                                    </span>
-                                    <i v-show="aInstance.displayNameShowEdit" 
-                                        class="fa fa-sm fa-pencil float-end" 
-                                        style="transform: translateY(9px) translateX(-3px); cursor:pointer;"
-                                        @click="aInstance.displayNameIsEditMode = true"
-                                    ></i>
-                                </label>
-                                <label v-if="aInstance.displayNameIsEditMode"  
-                                    style="border-width: 'thin'; border-style: 'dashed'; width: calc(100% - 30px);"
-                                >
-                                    <input style="text" v-model="aInstance.displayNameEditValue"/>
-                                    <i class="fa fa-sm fa-cancel float-end" 
-                                        style="transform: translateY(9px) translateX(-3px); cursor:pointer;"
-                                        @click="aInstance.displayNameIsEditMode=false"
-                                    ></i>
-                                    <i class="fa fa-sm fa-save float-end" 
-                                        style="transform: translateY(9px) translateX(-3px); cursor:pointer;"
-                                        @click="UpdateDisplayNameAsync(aInstance)"
-                                    ></i>
-                                </label>
-                                <a class="btn btn-link btn-sm" data-toggle="tooltip" :title="`Browse to ${aInstance.displayName}`" :href="`./applications/model-explorer?tab=instance_tab&instance_id=${aInstance.id}`" target="_blank">
-                                    <i style="transform: translateY(-3px);" class="fa fa-external-link"></i>
+                            <th scope="col" v-for="aAttribute in FilteredAttributes">
+                                {{aAttribute.displayName}}
+                                <a class="btn btn-link btn-sm" data-toggle="tooltip" :title="`Browse to Attribute ${aAttribute.displayName}`" :href="`./applications/model-explorer?tab=attribute_tab&attribute_id=${aAttribute.id}`" target="_blank">
+                                    <i style="transform: translateY(-3px);" class="fa fa-light fa-external-link"></i>
                                 </a>
-
-
                             </th>
                         </tr>
                     </thead>
-                    <tbody :set="tempAttributes = []">
+                    <tbody>
                         <tr>
-                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">Parent</th>
-                            <td v-for="aInstance in FilteredInstances">{{aInstance.parentName}}</th>
-                        </tr>
-                        <tr>
-                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">GrandParent</th>
-                            <td v-for="aInstance in FilteredInstances">{{aInstance.grandParentName}}</th>
-                        </tr>
-                        <tr>
-                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">id,fqn</th>
-                            <td v-for="aInstance in FilteredInstances">
-                                <button class="btn btn-link btn-sm" data-toggle="tooltip" :title="`copy id: ${aInstance.id}`" @click="clipboard.writeText(aInstance.id)">id</button>
-                                <button class="btn btn-link btn-sm" data-toggle="tooltip" :title="`copy fqn: ${aInstance.fqn.join('.')}`" @click="clipboard.writeText(aInstance.fqn.join('.'))">fqn</button>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">Instance</th>
+                            <td v-for="aAttribute in FilteredAttributes">
+                                {{aAttribute.instanceName}}
+                                <a class="btn btn-link btn-sm" data-toggle="tooltip" :title="`Browse to Instance ${aAttribute.instanceName}`" :href="`./applications/model-explorer?tab=instance_tab&instance_id=${aAttribute.onObject.id}`" target="_blank">
+                                    <i style="transform: translateY(-3px);" class="fa fa-light fa-external-link"></i>
+                                </a>
                             </th>
                         </tr>
-                        <tr v-for="(aTypeToAttributeType,r) in typeToAttributeTypes.filter(x=>x.checked)" :set="tempAttributes[r] = []">
-                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">{{aTypeToAttributeType.name}}</th>
-                            <td v-for="(aInstance,i) in FilteredInstances" :set="tempAttributes[r][i] = aInstance.attributes.find(x=>x.displayName==aTypeToAttributeType.name)">
-                                <label v-if="! tempAttributes[r][i].isEditMode" class="w-100" 
-                                    @mouseover="tempAttributes[r][i].showEdit = tempAttributes[r][i].allowEdit ? true : false" 
-                                    @mouseout="tempAttributes[r][i].showEdit = false" 
-                                    :style="`border-width:${tempAttributes[r][i].showEdit ? 'thin' : ''}; border-style:${tempAttributes[r][i].showEdit ? 'dashed' : ''} ;`"
-                                >
-                                    <span v-if="['INTERNAL','TAG','EXPRESSION'].includes(tempAttributes[r][i].dataSource)">
-                                        <span style="color:red;" v-if="tempAttributes[r][i].currentValue == null" data-toggle="tooltip" title="ts: no current value">
-                                            {{tempAttributes[r][i].displayValue}}
-                                        </span>
-                                        <span style="color:red;" v-else data-toggle="tooltip" :title="`V:${tempAttributes[r][i].currentValue.value} T:${tempAttributes[r][i].currentValue.timestamp}`">
-                                            {{tempAttributes[r][i].displayValue}}
-                                        </span>
-                                    </span>
-                                    <span v-else>
-                                        {{tempAttributes[r][i].displayValue}}
-                                    </span>
-                                    <i v-show="tempAttributes[r][i].showEdit" 
-                                        class="fa fa-sm fa-pencil float-end" 
-                                        style="transform: translateY(9px) translateX(-3px); cursor:pointer;"
-                                        @click="tempAttributes[r][i].isEditMode = true"
-                                    ></i>
-                                </label>
-                                <label v-if="tempAttributes[r][i].isEditMode" class="w-100" 
-                                    style="border-width: 'thin'; border-style: 'dashed';"
-                                >
-                                    <input style="text" v-model="tempAttributes[r][i].displayValueEdit"/>
-                                    <i class="fa fa-sm fa-cancel float-end" 
-                                        style="transform: translateY(9px) translateX(-3px); cursor:pointer;"
-                                        @click="tempAttributes[r][i].isEditMode=false"
-                                    ></i>
-                                    <i class="fa fa-sm fa-save float-end" 
-                                        style="transform: translateY(9px) translateX(-3px); cursor:pointer;"
-                                        @click="UpdateAttributeAsync(tempAttributes[r][i])"
-                                    ></i>
-                                </label>
+                        <tr>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">InstanceParent</th>
+                            <td v-for="aAttribute in FilteredAttributes">{{aAttribute.instanceParentName}}</th>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">InstanceGrandParent</th>
+                            <td v-for="aAttribute in FilteredAttributes">{{aAttribute.instanceGrandParentName}}</th>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;"></th>
+                            <td v-for="aAttribute in FilteredAttributes">
+                                <button class="btn btn-link btn-sm" data-toggle="tooltip" :title="`copy id: ${aAttribute.id}`" @click="clipboard.writeText(aAttribute.id)">id</button>
+                                <button class="btn btn-link btn-sm" data-toggle="tooltip" :title="`copy fqn: ${aAttribute.fqn}`" @click="clipboard.writeText(aAttribute.fqn)">fqn</button>
+                            </th>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;"></th>
+                            <td v-for="aAttribute in FilteredAttributes">
+                            </th>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">Data Source</th>
+                            <td v-for="aAttribute in FilteredAttributes">
+                                {{aAttribute.dataSource}}
+                            </th>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">Config Value</th>
+                            <td v-for="aAttribute in FilteredAttributes">
+                                {{aAttribute.enumerationValue==null ? '---' : `${aAttribute.enumerationValue} ("${GetEnumMatch(aAttribute.enumerationValue, aAttribute.enumerationValues)}"")`}}
+                            </th>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">Current Value</th>
+                            <td v-for="aAttribute in FilteredAttributes">
+                                {{aAttribute.currentValue==null ? '---' : `${aAttribute.currentValue.value} ("${GetEnumMatch(aAttribute.currentValue.value, aAttribute.enumerationValues)}"")`}}
+                                <i v-if="aAttribute.currentValue!=null" class="fa fa-light fa-clock" data-toggle="tooltip" :title="moment(aAttribute.currentValue.timestamp).toISOString()"></t>
+                            </th>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;"></th>
+                            <td v-for="aAttribute in FilteredAttributes">
+                            </th>
+                        </tr>
+                        <tr v-for="(aEnumerationValue, i) in activeEnumType.defaultEnumerationValues">
+                            <th scope="row" style="position: sticky; left: 0; z-index: 10; background: white;">
+                                {{activeEnumType.defaultEnumerationValues[i]}}: 
+                                {{activeEnumType.enumerationNames[i]}}
+                            </th>
+                            <td v-for="aAttribute in FilteredAttributes">
+                                {{aAttribute.enumerationValues[i]}}
                             </td>
                         </tr>
-                    <tbody>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -287,398 +239,177 @@ $user = Factory::getUser();
         // el: "#app",
         data() {
             return {
+                moment: moment,
                 allowEditMode: false,
                 pageWidth: pageWidth,
                 clipboard: clipboard,
-                pageTitle: "Manage Instances of Types Side by Side",
+                pageTitle: "Manage Enumeration Attributes by Enumeration Type Side by Side",
                 context:<?php echo json_encode($context)?>,
                 user:<?php echo json_encode($user)?>,
-                tiqTypes: [],
-                expandTiqTypes: true,
-                activeType: null,
+                tiqEnumTypes: [],
+                expandTiqEnumTypes: true,
+                activeEnumType: null,
+                attributeNames: [],
+                expandAttributeNames: false,
+                attributeDataSources: [],
                 instanceNames: [],
                 expandInstanceNames: false,
-                expandFnqFilter: false,
-                fqnFilterText: "",
-                useFqnFilter: false,
-                parentNames: [],
-                expandParentNames: false,
-                grandParentNames: [],
-                expandGrandParentNames: false,
-                typeToAttributeTypes: [],
-                expandTypeToAttributeTypes: false,
-                typeToAttributeTypesByImportance: true,
+                instanceParentNames: [],
+                expandInstanceParentNames: false,
+                instanceGrandParentNames: [],
+                expandInstanceGrandParentNames: false,
             }
         },
         mounted: async function () {
             WinDoc.title = this.pageTitle;
-            await this.LoadTiqTypesAsync();
+            await this.LoadTiqEnumTypesAsync();
         },
         computed: {
-            FilteredInstances: function(){
-                let instances = [];
-                this.activeType.objectsByTypeId.forEach(aInstance => {
-                    let useInstance = true;
+            FilteredAttributes: function(){
+                let attributes = [];
+                this.activeEnumType.attributes.forEach(aAttribute => {
+                    let useAttribute = true;
 
-                    if(! this.instanceNames.find(x=>x.name == aInstance.displayName).checked){
-                        useInstance = false;
+                    if(! this.attributeNames.find(x=>x.name == aAttribute.displayName).checked){
+                        useAttribute = false;
                     }
 
-                    if(this.useFqnFilter){
-                        if(!aInstance.fqn.join(".").includes(this.fqnFilterText)){
-                            useInstance = false;
-                        }
+                    if(! this.attributeDataSources.find(x=>x.name == aAttribute.dataSource).checked){
+                        useAttribute = false;
                     }
 
-                    if(! this.parentNames.find(x=>x.name == aInstance.parentName).checked){
-                        useInstance = false;
+                    if(! this.instanceNames.find(x=>x.name == aAttribute.instanceName).checked){
+                        useAttribute = false;
                     }
 
-                    if(! this.grandParentNames.find(x=>x.name == aInstance.grandParentName).checked){
-                        useInstance = false;
+                    if(! this.instanceParentNames.find(x=>x.name == aAttribute.instanceParentName).checked){
+                        useAttribute = false;
                     }
 
-                    if(useInstance){
-                        instances.push(aInstance);
+                    if(! this.instanceGrandParentNames.find(x=>x.name == aAttribute.instanceGrandParentName).checked){
+                        useAttribute = false;
+                    }
+
+                    if(useAttribute){
+                        attributes.push(aAttribute);
                     }
                 });
-                return instances;
+                return attributes;
             },
-            SortedTypeToAttributeTypesByImportance: function(){
-                if(this.typeToAttributeTypesByImportance){
-                    return this.typeToAttributeTypes.sort((a,b) => a.importance >= b.importance ? 1 : -1);
-                } else {
-                    return this.typeToAttributeTypes.sort((a,b) => a.name > b.name ? 1 : -1);
-                }
-            }
+
         },
         methods: {
-            UpdateDisplayNameAsync: async function(aInstance){
-                
-                if(this.instanceNames.filter(x=>x.name == aInstance.displayNameEditValue).length == 0){
-                    this.instanceNames.push({
-                        name: aInstance.displayNameEditValue,
-                        checked: true
-                    })
-                }
-
-                
-                let query = `
-                    mutation m1 {
-                        updateObject(
-                        input: { id: "${aInstance.id}", patch: { displayName: "${aInstance.displayNameEditValue}" } }
-                        ) {
-                            clientMutationId
-                            object {
-                                displayName
-                            }
-                        }
-                    }                
-                `;
-
-                console.log(query);
-
-                let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
-                aInstance.displayName = aResponse.data.updateObject.object.displayName;
-                aInstance.displayNameEditValue = aResponse.data.updateObject.object.displayName;
-                console.log(aResponse);
-
-
-                aInstance.displayNameShowEdit = false;
-                aInstance.displayNameIsEditMode = false;
-
+            GetEnumMatch: function(aValue, aEnumerationValues){
+                let aIndex = aEnumerationValues.findIndex(x=>x==aValue);
+                let enumMatch= aIndex == -1 ? '---' : this.activeEnumType.enumerationNames[aIndex];
+                return enumMatch;
             },
-            UpdateAttributeAsync: async function(aAttribute){
-
-                let aFieldName = null;
-                let aValue = null;
-                let proceed = false;
-
-                switch(aAttribute.dataType){
-                    case "STRING":
-                        aFieldName = 'stringValue';
-                        aValue = `"${aAttribute.displayValueEdit}"`;
-                        proceed = true;
-                        break;
-                    case "BOOL":
-                        aFieldName = 'boolValue';
-                        aValue = JSON.parse(aAttribute.displayValueEdit);
-                        if(typeof(aValue)=='boolean'){
-                            proceed = true;
-                        }
-                        break;
-                    case "INT":
-                        aFieldName = 'intValue';
-                        aValue = parseInt(aAttribute.displayValueEdit);
-                        if(!isNaN(aValue)){
-                            // GraphQL needs a string to patch BigInt fields
-                            aValue = `"${aValue}"`;
-                            proceed = true;
-                        }
-                        break;
-                    case "FLOAT":
-                        aFieldName = 'floatValue';
-                        aValue = parseFloat(aAttribute.displayValueEdit);
-                        if(!isNaN(aValue)){
-                            proceed = true;
-                        }
-                        break;
-                    case "ENUMERATION":
-                        aFieldName = 'enumerationName';
-                        // not supported
-                        break;
-                    case "OBJECT":
-                        aFieldName = 'objectValue';
-                        // not supported
-                        break;
-                    case "REFERENCE":
-                        aFieldName = 'referencedAttribute';
-                        // not supported
-                        break;
-                    default:
-                        aFieldName = `unknown data type: ${aAttribute.dataType}`;
-                        break;
-                }
-
-                if(proceed){
-
-                    let query = `
-                        mutation m1 {
-                            updateAttribute(
-                            input: { id: "${aAttribute.id}", patch: { ${aFieldName}: ${aValue} } }
-                            ) {
-                                clientMutationId
-                                attribute {
-                                    ${aFieldName}
-                                }
-                            }
-                        }                
-                    `;
-
-                    console.log(query);
-
-                    let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
-                    aAttribute.displayValue = aResponse.data.updateAttribute.attribute[aFieldName];
-                    aAttribute.displayValueEdit = aResponse.data.updateAttribute.attribute[aFieldName];
-                    console.log(aResponse);
-                } else {
-                    console.log('not supported...');
-                    // undo
-                    aAttribute.displayValueEdit = aAttribute.displayValue;
-                }
-
-                aAttribute.showEdit = false;
-                aAttribute.isEditMode = false;
-
-            },
-            LoadTiqTypesAsync: async function(){
+            LoadTiqEnumTypesAsync: async function(){
                 let query = `
 query q1 {
-    tiqTypes {
+    enumerationTypes {
         id
         displayName
+        defaultEnumerationValues
+        enumerationNames
         partOf {
             id
             displayName
         }
-        objectsByTypeId {
+        attributes {
             id
+            displayName
+            fqn
+            dataSource
+            enumerationValue
+            enumerationValues
+            currentValue{
+                timestamp
+                value
+            }
+            onObject {
+                id
+                displayName
+                parentObject {
+                    id
+                    displayName
+                    parentObject {
+                        id
+                        displayName
+                    }
+                }
+            }
         }
     }
 }
                 `;
                 let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
-                let tiqTypes = aResponse.data.tiqTypes;
-                this.tiqTypes = tiqTypes.sort((a,b) => a.objectsByTypeId.length <= b.objectsByTypeId.length ? 1 : -1);
+                let tiqEnumTypes = aResponse.data.enumerationTypes;
+                this.tiqEnumTypes = tiqEnumTypes.sort((a,b) => a.attributes.length <= b.attributes.length ? 1 : -1);
             },
-            OnSelectTypeAsync: async function(a){
-                // console.log(a);
-
-                let query = `
-query q1 {
-  tiqType(id: "${a.id}") {
-    id
-    displayName
-    partOf {
-      id
-      displayName
-    }
-    subTypeOf {
-      id
-      displayName
-    }
-    typeToAttributeTypes {
-      id
-      displayName
-      dataType
-      sourceCategory
-      importance
-      enumerationType {
-        enumerationNames
-      }
-    }
-    objectsByTypeId {
-      id
-      displayName
-      relativeName
-      fqn
-      parentObject {
-        id
-        displayName
-        parentObject {
-          id
-          displayName
-        }
-      }
-      attributes {
-        id
-        displayName
-        dataType
-        intValue
-        floatValue
-        stringValue
-        objectValue
-        enumerationName
-        enumerationValue
-        enumerationValues
-        enumerationType {
-          enumerationNames
-        }
-        boolValue
-        dataSource
-        currentValue{
-          value
-          timestamp
-          status
-        }
-        referencedAttribute{
-            id
-            displayName
-        }
-      }
-    }
-  }
-}                `;
-
-                let aResponse = await tiqJSHelper.invokeGraphQLAsync(query);
-                let tiqType = aResponse.data.tiqType;
+            OnSelectEnumTypeAsync: function(aEnumType){
+                
+                let attributeNames = [];
+                let attributeDataSources = [];
                 let instanceNames = [];
-                let parentNames = [];
-                let grandParentNames = [];
-                let typeToAttributeTypes = [];
-                tiqType.objectsByTypeId.forEach(aInstance => {
+                let instanceParentNames = [];
+                let instanceGrandParentNames = [];
+
+                aEnumType.attributes.forEach(aAttribute => {
                     
-                    aInstance.displayNameShowEdit = false;
-                    aInstance.displayNameIsEditMode = false;
-                    aInstance.displayNameEditValue = aInstance.displayName;
-                    aInstance.allowEdit = this.allowEditMode ? true : false;
+                    if(attributeNames.filter(x=>x.name == aAttribute.displayName).length == 0){
+                        attributeNames.push({
+                            name: aAttribute.displayName,
+                            checked: true
+                        })
+                    }
 
-                    if(instanceNames.filter(x=>x.name == aInstance.displayName).length == 0){
+                    if(attributeDataSources.filter(x=>x.name == aAttribute.dataSource).length == 0){
+                        attributeDataSources.push({
+                            name: aAttribute.dataSource,
+                            checked: true
+                        })
+                    }
+
+                    let instanceName = aAttribute.onObject.displayName;
+                    aAttribute.instanceName = instanceName;
+                    if(instanceNames.filter(x=>x.name == instanceName).length == 0){
                         instanceNames.push({
-                            name: aInstance.displayName,
+                            name: instanceName,
                             checked: true
                         })
                     }
 
-                    let parentName = aInstance.parentObject == null ? 'n/a' : aInstance.parentObject.displayName;
-                    aInstance.parentName = parentName;
-                    if(parentNames.filter(x=>x.name == parentName).length == 0){
-                        parentNames.push({
-                            name: parentName,
+                    let instanceParentName = aAttribute.onObject.parentObject == null ? 'n/a' : aAttribute.onObject.parentObject.displayName;
+                    aAttribute.instanceParentName = instanceParentName;
+                    if(instanceParentNames.filter(x=>x.name == instanceParentName).length == 0){
+                        instanceParentNames.push({
+                            name: instanceParentName,
                             checked: true
                         })
                     }
 
-                    let grandParentName = aInstance.parentObject == null ? 'n/a' : aInstance.parentObject.parentObject == null ? 'n/a' : aInstance.parentObject.parentObject.displayName;
-                    aInstance.grandParentName = grandParentName;
-                    if(grandParentNames.filter(x=>x.name == grandParentName).length == 0){
-                        grandParentNames.push({
-                            name: grandParentName,
+                    let instanceGrandParentName = aAttribute.onObject.parentObject == null ? 'n/a' : aAttribute.onObject.parentObject.parentObject == null ? 'n/a' : aAttribute.onObject.parentObject.parentObject.displayName;;
+                    aAttribute.instanceGrandParentName = instanceGrandParentName;
+                    if(instanceGrandParentNames.filter(x=>x.name == instanceGrandParentName).length == 0){
+                        instanceGrandParentNames.push({
+                            name: instanceGrandParentName,
                             checked: true
                         })
                     }
 
-                    tiqType.typeToAttributeTypes.forEach(aTypeToAttributeType => {
-
-                        if(typeToAttributeTypes.filter(x=>x.name == aTypeToAttributeType.displayName).length == 0){
-                            typeToAttributeTypes.push({
-                                name: aTypeToAttributeType.displayName,
-                                importance: aTypeToAttributeType.importance,
-                                checked: true,
-                                dataType: aTypeToAttributeType.dataType,
-                                sourceCategory: aTypeToAttributeType.sourceCategory
-                            })
-                        }
-
-                        let aAttribute = aInstance.attributes.find(x=>x.displayName == aTypeToAttributeType.displayName);
-                        if(aAttribute){
-                            let aValue = null;
-                            if(['INTERNAL','TAG','EXPRESSION'].includes(aAttribute.dataSource)){
-                                aValue = aAttribute.currentValue==null ? '-' : aAttribute.currentValue.value;
-                                // resolve enumerations
-                                if(aAttribute.dataType=='ENUMERATION' && aAttribute.currentValue!=null){
-                                    // get the index
-                                    let aIndex = aAttribute.enumerationValues.findIndex(x=>x==aAttribute.currentValue.value)
-                                    aValue = aAttribute.enumerationType.enumerationNames[aIndex];
-                                }
-                                aAttribute.allowEdit = false;
-                            } else {
-                                switch(aAttribute.dataType){
-                                    case "STRING":
-                                        aValue = aAttribute.stringValue;
-                                        aAttribute.allowEdit = this.allowEditMode ? true : false;
-                                        break;
-                                    case "BOOL":
-                                        aValue = JSON.stringify(aAttribute.boolValue);
-                                        aAttribute.allowEdit = this.allowEditMode ? true : false;
-                                        break;
-                                    case "INT":
-                                        aValue = aAttribute.intValue;
-                                        aAttribute.allowEdit = this.allowEditMode ? true : false;
-                                        break;
-                                    case "FLOAT":
-                                        aValue = aAttribute.floatValue;
-                                        aAttribute.allowEdit = this.allowEditMode ? true : false;
-                                        break;
-                                    case "ENUMERATION":
-                                        aValue = aAttribute.enumerationName;
-                                        // aAttribute.allowEdit = this.allowEditMode ? true : false;
-                                        break;
-                                    case "OBJECT":
-                                        aValue = aAttribute.objectValue==null ? '' : aAttribute.objectValue.replaceAll('","', '", "');
-                                        // aAttribute.allowEdit = this.allowEditMode ? true : false;
-                                        break;
-                                    case "REFERENCE":
-                                        aValue = aAttribute.referencedAttribute == null ? '' : aAttribute.referencedAttribute.displayName;
-                                        // aAttribute.allowEdit = this.allowEditMode ? true : false;
-                                        break;
-                                    default:
-                                        aValue = `unknown data type: ${aAttribute.dataType}`;
-                                        break;
-                                }
-                            }
-                            aAttribute.displayValue = aValue;
-                            
-                        } else {
-                            aAttribute = {
-                                displayName : aTypeToAttributeType.displayName,
-                                displayValue : '__deleted__',
-                                allowEdit : false,
-                            }
-                            aInstance.attributes.push(aAttribute);
-                        }
-
-                        aAttribute.showEdit = false;
-                        aAttribute.isEditMode = false;
-                        aAttribute.displayValueEdit = aAttribute.displayValue;
-                    });
                 });
-                this.activeType = tiqType;
+                
+                
+                this.activeEnumType = aEnumType;
+
+                this.attributeNames = attributeNames.sort((a,b) => a.name > b.name ? 1 : -1);
+                this.attributeDataSources = attributeDataSources.sort((a,b) => a.name > b.name ? 1 : -1);
                 this.instanceNames = instanceNames.sort((a,b) => a.name > b.name ? 1 : -1);
-                this.parentNames = parentNames.sort((a,b) => a.name > b.name ? 1 : -1);
-                this.grandParentNames = grandParentNames.sort((a,b) => a.name > b.name ? 1 : -1);
-                this.typeToAttributeTypes = typeToAttributeTypes;
-                this.expandTiqTypes = false;
+                this.instanceParentNames = instanceParentNames.sort((a,b) => a.name > b.name ? 1 : -1);
+                this.instanceGrandParentNames = instanceGrandParentNames.sort((a,b) => a.name > b.name ? 1 : -1);
+                
+                this.expandTiqEnumTypes = false;
             }
         },
     })
